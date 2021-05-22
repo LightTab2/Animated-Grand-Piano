@@ -46,13 +46,104 @@ float* texCoords = myCubeTexCoords;
 float* colors = myCubeColors;
 int vertexCount = myCubeVertexCount;
 
+std::vector <glm::vec4> examplevertices;
+std::vector <glm::vec2> exampleuvs;
+std::vector <glm::vec4> examplenormals;
+float* vertices_ptr;
+float* texCoords_ptr;
+float* normals_ptr;
+
 GLuint tex0;
 GLuint tex1;
+GLuint tex2;
 
 
 //Procedura obsługi błędów
 void error_callback(int error, const char* description) {
 	fputs(description, stderr);
+}
+
+bool loadOBJ(
+	const char* path,
+	std::vector < glm::vec4 >& out_vertices,
+	std::vector < glm::vec2 >& out_uvs,
+	std::vector < glm::vec4 >& out_normals
+)
+{
+	std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
+	std::vector< glm::vec4 > temp_vertices;
+	std::vector< glm::vec2 > temp_uvs;
+	std::vector< glm::vec4 > temp_normals;
+
+	FILE* file = fopen(path, "r");
+	if (file == NULL) {
+		printf("Impossible to open the file !\n");
+		return false;
+	}
+
+	while (1) {
+
+		char lineHeader[128];
+		// read the first word of the line
+		int res = fscanf(file, "%s", lineHeader);
+		if (res == EOF)
+			break; // EOF = End Of File. Quit the loop.
+
+		// else : parse lineHeader
+		if (strcmp(lineHeader, "v") == 0) {
+			glm::vec4 vertex;
+			fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
+			vertex.w = 1;
+			temp_vertices.push_back(vertex);
+		}else if (strcmp(lineHeader, "vt") == 0) {
+			glm::vec2 uv;
+			fscanf(file, "%f %f\n", &uv.x, &uv.y);
+			temp_uvs.push_back(uv);
+		}else if (strcmp(lineHeader, "vn") == 0) {
+			glm::vec4 normal;
+			fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
+			normal.w = 0;
+			temp_normals.push_back(normal);
+		}
+		else if (strcmp(lineHeader, "f") == 0) {
+			std::string vertex1, vertex2, vertex3;
+			unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+			int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2]);
+			if (matches != 9) {
+				printf("File can't be read by our simple parser : ( Try exporting with other options\n");
+				return false;
+			}
+			vertexIndices.push_back(vertexIndex[0]);
+			vertexIndices.push_back(vertexIndex[1]);
+			vertexIndices.push_back(vertexIndex[2]);
+			uvIndices.push_back(uvIndex[0]);
+			uvIndices.push_back(uvIndex[1]);
+			uvIndices.push_back(uvIndex[2]);
+			normalIndices.push_back(normalIndex[0]);
+			normalIndices.push_back(normalIndex[1]);
+			normalIndices.push_back(normalIndex[2]);
+		}
+	}
+	// For each vertex of each triangle
+	for (unsigned int i = 0; i < vertexIndices.size(); i++) {
+		unsigned int vertexIndex = vertexIndices[i];
+		glm::vec4 vertex = temp_vertices[vertexIndex - 1];
+		out_vertices.push_back(vertex);
+	}
+	// For each uv of each triangle
+	for (unsigned int i = 0; i < uvIndices.size(); i++) {
+		unsigned int uvIndex = uvIndices[i];
+		glm::vec2 uv = temp_uvs[uvIndex - 1];
+		out_uvs.push_back(uv);
+	}
+	// For each normal of each triangle
+	for (unsigned int i = 0; i < normalIndices.size(); i++) {
+		unsigned int normalIndex = normalIndices[i];
+		glm::vec4 normal = temp_normals[normalIndex - 1];
+		out_normals.push_back(normal);
+		printf("w %f %f %f %f\n", normal.x, normal.y, normal.z, normal.w);
+	}
+	return true;
 }
 
 GLuint readTexture(const char* filename) {
@@ -108,6 +199,14 @@ void initOpenGLProgram(GLFWwindow* window) {
 	glfwSetKeyCallback(window,keyCallback);
 	tex0 = readTexture("metal.png");
 	tex1 = readTexture("metal_spec.png");
+	tex2 = readTexture("stone-wall.png");
+	if (!loadOBJ("example.obj", examplevertices, exampleuvs, examplenormals))
+		printf("Model not loaded\n");//procedura bledu TODO
+	vertices_ptr = &examplevertices[0].x;
+	texCoords_ptr = &exampleuvs[0].x;
+	normals_ptr = &examplenormals[0].x;
+	for (int i = 0; i < 36; i++)
+		printf("%f %f %f\n", normals_ptr[i * 4], normals_ptr[i * 4 + 1], normals_ptr[i * 4 + 2], normals_ptr[i * 4 + 3]);
 	sp=new ShaderProgram("v_simplest.glsl",NULL,"f_simplest.glsl");
 }
 
@@ -117,6 +216,7 @@ void freeOpenGLProgram(GLFWwindow* window) {
     //************Tutaj umieszczaj kod, który należy wykonać po zakończeniu pętli głównej************
 	glDeleteTextures(1, &tex0);
 	glDeleteTextures(1, &tex1);
+	glDeleteTextures(1, &tex2);
     delete sp;
 }
 
@@ -145,17 +245,19 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
     glUniformMatrix4fv(sp->u("V"),1,false,glm::value_ptr(V));
     glUniformMatrix4fv(sp->u("M"),1,false,glm::value_ptr(M));
 
-    glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
-    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0,vertices); //Wskaż tablicę z danymi dla atrybutu vertex
+	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
+    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0, vertices_ptr); //Wskaż tablicę z danymi dla atrybutu vertex
 
 	glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu color
 	glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, colors); //Wskaż tablicę z danymi dla atrybutu color
 
 	glEnableVertexAttribArray(sp->a("normal"));  //Włącz przesyłanie danych do atrybutu normal
-	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT, false, 0, normals); //Wskaż tablicę z danymi dla atrybutu normal
+	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT , false, 0, normals_ptr); //Wskaż tablicę z danymi dla atrybutu normal
 	
 	glEnableVertexAttribArray(sp->a("texCoord0"));  //Włącz przesyłanie danych do atrybutu texcoord
-	glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, texCoords);
+	glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, texCoords_ptr);
+
+
 
 	glUniform1i(sp->u("textureMap0"), 0);
 	glActiveTexture(GL_TEXTURE0);
@@ -165,7 +267,7 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, tex1);
 
-    glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES, 0, vertexCount); //Narysuj obiekt
 
     glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
 	glDisableVertexAttribArray(sp->a("color"));  //Wyłącz przesyłanie danych do atrybutu color
