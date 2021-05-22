@@ -3,6 +3,7 @@
 
 uniform sampler2D textureMap0;
 uniform sampler2D textureMap1;
+uniform float textureless;
 
 out vec4 pixelColor; //Zmienna wyjsciowa fragment shadera. Zapisuje sie do niej ostateczny (prawie) kolor piksela
 
@@ -22,8 +23,18 @@ void main(void) {
 	vec4 mr = reflect(-ml, mn);
 
 	//Parametry powierzchni
-	vec4 kd = texture(textureMap0,iTexCoord0);
-	vec4 ks = texture(textureMap1,iTexCoord0);
+	vec4 kd;
+	vec4 ks;
+	if(textureless==0)
+	{
+	kd = texture(textureMap0,iTexCoord0);
+	ks = texture(textureMap1,iTexCoord0);
+	}
+	else
+	{
+	kd = vec4(0.75,0.75,0.75,1);
+	ks = kd;
+	}
 
 	//Obliczenie modelu oświetlenia
 	float nl = clamp(dot(mn, ml), 0, 1);

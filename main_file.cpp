@@ -32,37 +32,6 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 #include "shaderprogram.h"
 #include "myCube.h"
 
-float speed_x=0;
-float speed_y=0;
-float aspectRatio=1;
-
-ShaderProgram *sp;
-
-
-//Odkomentuj, żeby rysować kostkę
-float* vertices = myCubeVertices;
-float* normals = myCubeNormals;
-float* texCoords = myCubeTexCoords;
-float* colors = myCubeColors;
-int vertexCount = myCubeVertexCount;
-
-std::vector <glm::vec4> examplevertices;
-std::vector <glm::vec2> exampleuvs;
-std::vector <glm::vec4> examplenormals;
-float* vertices_ptr;
-float* texCoords_ptr;
-float* normals_ptr;
-
-GLuint tex0;
-GLuint tex1;
-GLuint tex2;
-
-
-//Procedura obsługi błędów
-void error_callback(int error, const char* description) {
-	fputs(description, stderr);
-}
-
 bool loadOBJ(
 	const char* path,
 	std::vector < glm::vec4 >& out_vertices,
@@ -95,11 +64,13 @@ bool loadOBJ(
 			fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
 			vertex.w = 1;
 			temp_vertices.push_back(vertex);
-		}else if (strcmp(lineHeader, "vt") == 0) {
+		}
+		else if (strcmp(lineHeader, "vt") == 0) {
 			glm::vec2 uv;
 			fscanf(file, "%f %f\n", &uv.x, &uv.y);
 			temp_uvs.push_back(uv);
-		}else if (strcmp(lineHeader, "vn") == 0) {
+		}
+		else if (strcmp(lineHeader, "vn") == 0) {
 			glm::vec4 normal;
 			fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
 			normal.w = 0;
@@ -141,7 +112,6 @@ bool loadOBJ(
 		unsigned int normalIndex = normalIndices[i];
 		glm::vec4 normal = temp_normals[normalIndex - 1];
 		out_normals.push_back(normal);
-		printf("w %f %f %f %f\n", normal.x, normal.y, normal.z, normal.w);
 	}
 	return true;
 }
@@ -155,19 +125,110 @@ GLuint readTexture(const char* filename) {
 	unsigned width, height;   //Zmienne do których wczytamy wymiary obrazka
 	//Wczytaj obrazek
 	unsigned error = lodepng::decode(image, width, height, filename);
-
 	//Import do pamięci karty graficznej
 	glGenTextures(1, &tex); //Zainicjuj jeden uchwyt
 	glBindTexture(GL_TEXTURE_2D, tex); //Uaktywnij uchwyt
 	//Wczytaj obrazek do pamięci KG skojarzonej z uchwytem
 	glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0,
 		GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char*)image.data());
-
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	return tex;
 }
+
+class LoadedObjModel {
+public:
+	float* _vertices;
+	float* _normals;
+	float* _texCoords;
+	float* _colors = NULL;
+	int _verticesCount;
+
+private:
+	GLuint* _tex;
+	GLuint* _texspec;
+	std::vector <glm::vec4> vecVertices;
+	std::vector <glm::vec2> vecTexCoords;
+	std::vector <glm::vec4> vecNormals;
+
+public:
+	LoadedObjModel() {}
+
+	LoadedObjModel(float* vertices, float* normals, float* texCords, int verticesCount, GLuint* tex_ptr = NULL, GLuint* texspec_ptr = NULL)
+	{
+		_vertices = vertices;
+		_normals = normals;
+		_texCoords = texCords;
+		_verticesCount = verticesCount;
+		_tex = tex_ptr;
+		_texspec = texspec_ptr;
+	}
+
+	LoadedObjModel(const char* model_path, GLuint* tex_ptr = NULL, GLuint* texspec_ptr = NULL)
+	{
+		//model loading
+		if (!loadOBJ(model_path, vecVertices, vecTexCoords, vecNormals))
+		{
+			printf("Model not loaded: %s\n", model_path);
+		}//procedura bledu TODO
+		else
+		{
+			printf("Model loaded: %s\n", model_path);
+			_vertices = &vecVertices[0].x;
+			_normals = &vecNormals[0].x;
+			_texCoords = &vecTexCoords[0].x;
+			_verticesCount = vecVertices.size();
+		}
+		_tex = tex_ptr;
+		_texspec = texspec_ptr;
+	}
+	GLuint tex()
+	{
+		return *_tex;
+	}
+	GLuint tex_spec()
+	{
+		return *_texspec;
+	}
+
+	void setTex(GLuint* tex_ptr)
+	{
+		_tex = tex_ptr;
+	}
+
+	void setTex_spec(GLuint* texspec_ptr)
+	{
+		_texspec = texspec_ptr;
+	}
+	void setColors(float* colors)
+	{
+		_colors = colors;
+	}
+};
+
+float speed_x=0;
+float speed_y=0;
+float aspectRatio=1;
+
+ShaderProgram *sp;
+
+
+LoadedObjModel myCube;
+LoadedObjModel myExample;
+LoadedObjModel myGrandPiano;
+
+GLuint tex0;
+GLuint tex1;
+GLuint tex2;
+
+
+
+//Procedura obsługi błędów
+void error_callback(int error, const char* description) {
+	fputs(description, stderr);
+}
+
 
 void keyCallback(GLFWwindow* window,int key,int scancode,int action,int mods) {
     if (action==GLFW_PRESS) {
@@ -200,13 +261,11 @@ void initOpenGLProgram(GLFWwindow* window) {
 	tex0 = readTexture("metal.png");
 	tex1 = readTexture("metal_spec.png");
 	tex2 = readTexture("stone-wall.png");
-	if (!loadOBJ("example.obj", examplevertices, exampleuvs, examplenormals))
-		printf("Model not loaded\n");//procedura bledu TODO
-	vertices_ptr = &examplevertices[0].x;
-	texCoords_ptr = &exampleuvs[0].x;
-	normals_ptr = &examplenormals[0].x;
-	for (int i = 0; i < 36; i++)
-		printf("%f %f %f\n", normals_ptr[i * 4], normals_ptr[i * 4 + 1], normals_ptr[i * 4 + 2], normals_ptr[i * 4 + 3]);
+	myCube = LoadedObjModel(myCubeVertices, myCubeNormals, myCubeTexCoords, myCubeVertexCount, &tex0, &tex1);
+	myCube.setColors(myCubeColors);
+	myExample = LoadedObjModel("example.obj", &tex1, &tex2);
+	myGrandPiano = LoadedObjModel("grandPiano.obj");
+
 	sp=new ShaderProgram("v_simplest.glsl",NULL,"f_simplest.glsl");
 }
 
@@ -221,15 +280,13 @@ void freeOpenGLProgram(GLFWwindow* window) {
 }
 
 
-
-
 //Procedura rysująca zawartość sceny
 void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	//************Tutaj umieszczaj kod rysujący obraz******************l
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glm::mat4 V=glm::lookAt(
-         glm::vec3(0, 0, -6.5),
+         glm::vec3(0, 9, -16.5),
          glm::vec3(0,0,0),
          glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz widoku
 
@@ -239,25 +296,26 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	M=glm::rotate(M,angle_y,glm::vec3(1.0f,0.0f,0.0f)); //Wylicz macierz modelu
 	M=glm::rotate(M,angle_x,glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz modelu
 
+
     sp->use();//Aktywacja programu cieniującego
     //Przeslij parametry programu cieniującego do karty graficznej
     glUniformMatrix4fv(sp->u("P"),1,false,glm::value_ptr(P));
     glUniformMatrix4fv(sp->u("V"),1,false,glm::value_ptr(V));
     glUniformMatrix4fv(sp->u("M"),1,false,glm::value_ptr(M));
+	
+	glUniform1f(sp->u("textureless"), 0);
 
 	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
-    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0, vertices_ptr); //Wskaż tablicę z danymi dla atrybutu vertex
+    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0, myExample._vertices); //Wskaż tablicę z danymi dla atrybutu vertex
 
 	glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu color
-	glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, colors); //Wskaż tablicę z danymi dla atrybutu color
+	glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, myCube._colors); //Wskaż tablicę z danymi dla atrybutu color
 
 	glEnableVertexAttribArray(sp->a("normal"));  //Włącz przesyłanie danych do atrybutu normal
-	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT , false, 0, normals_ptr); //Wskaż tablicę z danymi dla atrybutu normal
+	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT , false, 0, myExample._normals); //Wskaż tablicę z danymi dla atrybutu normal
 	
 	glEnableVertexAttribArray(sp->a("texCoord0"));  //Włącz przesyłanie danych do atrybutu texcoord
-	glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, texCoords_ptr);
-
-
+	glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, myExample._texCoords);
 
 	glUniform1i(sp->u("textureMap0"), 0);
 	glActiveTexture(GL_TEXTURE0);
@@ -267,7 +325,7 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, tex1);
 
-	glDrawArrays(GL_TRIANGLES, 0, vertexCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES, 0, myExample._verticesCount); //Narysuj obiekt
 
     glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
 	glDisableVertexAttribArray(sp->a("color"));  //Wyłącz przesyłanie danych do atrybutu color
