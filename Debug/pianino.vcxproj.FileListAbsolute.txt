@@ -1,0 +1,2 @@
+F:\Programowanie\Pianino\Debug\pianino.exe
+F:\Programowanie\Pianino\Debug\pianino.pdb
