@@ -25,6 +25,7 @@ void main(void) {
 	//Parametry powierzchni
 	vec4 kd;
 	vec4 ks;
+
 	if(textureless==0)
 	{
 	kd = texture(textureMap0,iTexCoord0);

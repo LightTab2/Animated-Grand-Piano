@@ -31,7 +31,8 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 #include "lodepng.h"
 #include "shaderprogram.h"
 #include "myCube.h"
-
+#include "ObjMtlParser.h"
+/*
 bool loadOBJ(
 	const char* path,
 	std::vector < glm::vec4 >& out_vertices,
@@ -205,7 +206,7 @@ public:
 	{
 		_colors = colors;
 	}
-};
+}; */
 
 float speed_x=0;
 float speed_y=0;
@@ -258,9 +259,9 @@ void initOpenGLProgram(GLFWwindow* window) {
 	glEnable(GL_DEPTH_TEST);
 	glfwSetWindowSizeCallback(window,windowResizeCallback);
 	glfwSetKeyCallback(window,keyCallback);
-	tex0 = readTexture("metal.png");
-	tex1 = readTexture("metal_spec.png");
-	tex2 = readTexture("stone-wall.png");
+	tex0 = ObjMtlParser::readTexture("metal.png");
+	tex1 = ObjMtlParser::readTexture("metal_spec.png");
+	tex2 = ObjMtlParser::readTexture("stone-wall.png");
 	myCube = LoadedObjModel(myCubeVertices, myCubeNormals, myCubeTexCoords, myCubeVertexCount, &tex0, &tex1);
 	myCube.setColors(myCubeColors);
 	myExample = LoadedObjModel("example.obj", &tex1, &tex2);
@@ -306,16 +307,16 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	glUniform1f(sp->u("textureless"), 0);
 
 	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
-    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0, myExample._vertices); //Wskaż tablicę z danymi dla atrybutu vertex
+    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0, myGrandPiano._vertices); //Wskaż tablicę z danymi dla atrybutu vertex
 
 	glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu color
 	glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, myCube._colors); //Wskaż tablicę z danymi dla atrybutu color
 
 	glEnableVertexAttribArray(sp->a("normal"));  //Włącz przesyłanie danych do atrybutu normal
-	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT , false, 0, myExample._normals); //Wskaż tablicę z danymi dla atrybutu normal
+	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT , false, 0, myGrandPiano._normals); //Wskaż tablicę z danymi dla atrybutu normal
 	
 	glEnableVertexAttribArray(sp->a("texCoord0"));  //Włącz przesyłanie danych do atrybutu texcoord
-	glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, myExample._texCoords);
+	glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, myGrandPiano._texCoords);
 
 	glUniform1i(sp->u("textureMap0"), 0);
 	glActiveTexture(GL_TEXTURE0);
@@ -325,7 +326,7 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, tex1);
 
-	glDrawArrays(GL_TRIANGLES, 0, myExample._verticesCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES, 0, myGrandPiano._verticesCount); //Narysuj obiekt
 
     glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
 	glDisableVertexAttribArray(sp->a("color"));  //Wyłącz przesyłanie danych do atrybutu color
