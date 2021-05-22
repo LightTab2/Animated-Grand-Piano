@@ -19,7 +19,7 @@ Projekt zaliczeniowy na laboratorium **Grafiki Komputerowej i Wizualizacji**.
 ## Funckjonalność
 - [ ] Wyświetlanie oteksturowanego modelu pianina
 - [ ] Kamera FPS (hotkey: x)
-- [ ] Granie na pianinie za pomocą klawiatury (hotkey: x, klawisze q-] i a-\)
+- [ ] Granie na pianinie za pomocą klawiatury (hotkey: x, klawisze q-] i a-\\)
 - [ ] Możliwość otwarcia pianina (hotkey: z)
 - [ ] Uderzenia młoteczków w struny
 - [ ] Wibracje strun
