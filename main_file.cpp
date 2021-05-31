@@ -20,6 +20,10 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_SWIZZLE
 
+#include <assimp/Importer.hpp>      // C++ importer interface
+#include <assimp/scene.h>           // Output data structure
+#include <assimp/postprocess.h>     // Post processing flags
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -32,181 +36,6 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 #include "shaderprogram.h"
 #include "myCube.h"
 #include "ObjMtlParser.h"
-/*
-bool loadOBJ(
-	const char* path,
-	std::vector < glm::vec4 >& out_vertices,
-	std::vector < glm::vec2 >& out_uvs,
-	std::vector < glm::vec4 >& out_normals
-)
-{
-	std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
-	std::vector< glm::vec4 > temp_vertices;
-	std::vector< glm::vec2 > temp_uvs;
-	std::vector< glm::vec4 > temp_normals;
-
-	FILE* file = fopen(path, "r");
-	if (file == NULL) {
-		printf("Impossible to open the file !\n");
-		return false;
-	}
-
-	while (1) {
-
-		char lineHeader[128];
-		// read the first word of the line
-		int res = fscanf(file, "%s", lineHeader);
-		if (res == EOF)
-			break; // EOF = End Of File. Quit the loop.
-
-		// else : parse lineHeader
-		if (strcmp(lineHeader, "v") == 0) {
-			glm::vec4 vertex;
-			fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
-			vertex.w = 1;
-			temp_vertices.push_back(vertex);
-		}
-		else if (strcmp(lineHeader, "vt") == 0) {
-			glm::vec2 uv;
-			fscanf(file, "%f %f\n", &uv.x, &uv.y);
-			temp_uvs.push_back(uv);
-		}
-		else if (strcmp(lineHeader, "vn") == 0) {
-			glm::vec4 normal;
-			fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
-			normal.w = 0;
-			temp_normals.push_back(normal);
-		}
-		else if (strcmp(lineHeader, "f") == 0) {
-			std::string vertex1, vertex2, vertex3;
-			unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-			int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2]);
-			if (matches != 9) {
-				printf("File can't be read by our simple parser : ( Try exporting with other options\n");
-				return false;
-			}
-			vertexIndices.push_back(vertexIndex[0]);
-			vertexIndices.push_back(vertexIndex[1]);
-			vertexIndices.push_back(vertexIndex[2]);
-			uvIndices.push_back(uvIndex[0]);
-			uvIndices.push_back(uvIndex[1]);
-			uvIndices.push_back(uvIndex[2]);
-			normalIndices.push_back(normalIndex[0]);
-			normalIndices.push_back(normalIndex[1]);
-			normalIndices.push_back(normalIndex[2]);
-		}
-	}
-	// For each vertex of each triangle
-	for (unsigned int i = 0; i < vertexIndices.size(); i++) {
-		unsigned int vertexIndex = vertexIndices[i];
-		glm::vec4 vertex = temp_vertices[vertexIndex - 1];
-		out_vertices.push_back(vertex);
-	}
-	// For each uv of each triangle
-	for (unsigned int i = 0; i < uvIndices.size(); i++) {
-		unsigned int uvIndex = uvIndices[i];
-		glm::vec2 uv = temp_uvs[uvIndex - 1];
-		out_uvs.push_back(uv);
-	}
-	// For each normal of each triangle
-	for (unsigned int i = 0; i < normalIndices.size(); i++) {
-		unsigned int normalIndex = normalIndices[i];
-		glm::vec4 normal = temp_normals[normalIndex - 1];
-		out_normals.push_back(normal);
-	}
-	return true;
-}
-
-GLuint readTexture(const char* filename) {
-	GLuint tex;
-	glActiveTexture(GL_TEXTURE0);
-
-	//Wczytanie do pamięci komputera
-	std::vector<unsigned char> image;   //Alokuj wektor do wczytania obrazka
-	unsigned width, height;   //Zmienne do których wczytamy wymiary obrazka
-	//Wczytaj obrazek
-	unsigned error = lodepng::decode(image, width, height, filename);
-	//Import do pamięci karty graficznej
-	glGenTextures(1, &tex); //Zainicjuj jeden uchwyt
-	glBindTexture(GL_TEXTURE_2D, tex); //Uaktywnij uchwyt
-	//Wczytaj obrazek do pamięci KG skojarzonej z uchwytem
-	glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0,
-		GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char*)image.data());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	return tex;
-}
-
-class LoadedObjModel {
-public:
-	float* _vertices;
-	float* _normals;
-	float* _texCoords;
-	float* _colors = NULL;
-	int _verticesCount;
-
-private:
-	GLuint* _tex;
-	GLuint* _texspec;
-	std::vector <glm::vec4> vecVertices;
-	std::vector <glm::vec2> vecTexCoords;
-	std::vector <glm::vec4> vecNormals;
-
-public:
-	LoadedObjModel() {}
-
-	LoadedObjModel(float* vertices, float* normals, float* texCords, int verticesCount, GLuint* tex_ptr = NULL, GLuint* texspec_ptr = NULL)
-	{
-		_vertices = vertices;
-		_normals = normals;
-		_texCoords = texCords;
-		_verticesCount = verticesCount;
-		_tex = tex_ptr;
-		_texspec = texspec_ptr;
-	}
-
-	LoadedObjModel(const char* model_path, GLuint* tex_ptr = NULL, GLuint* texspec_ptr = NULL)
-	{
-		//model loading
-		if (!loadOBJ(model_path, vecVertices, vecTexCoords, vecNormals))
-		{
-			printf("Model not loaded: %s\n", model_path);
-		}//procedura bledu TODO
-		else
-		{
-			printf("Model loaded: %s\n", model_path);
-			_vertices = &vecVertices[0].x;
-			_normals = &vecNormals[0].x;
-			_texCoords = &vecTexCoords[0].x;
-			_verticesCount = vecVertices.size();
-		}
-		_tex = tex_ptr;
-		_texspec = texspec_ptr;
-	}
-	GLuint tex()
-	{
-		return *_tex;
-	}
-	GLuint tex_spec()
-	{
-		return *_texspec;
-	}
-
-	void setTex(GLuint* tex_ptr)
-	{
-		_tex = tex_ptr;
-	}
-
-	void setTex_spec(GLuint* texspec_ptr)
-	{
-		_texspec = texspec_ptr;
-	}
-	void setColors(float* colors)
-	{
-		_colors = colors;
-	}
-}; */
 
 float speed_x=0;
 float speed_y=0;
@@ -215,9 +44,15 @@ float aspectRatio=1;
 ShaderProgram *sp;
 
 
+
+LoadedObjModel myGrandPianoassimp;
+
 LoadedObjModel myCube;
+LoadedObjModel myCubeAss;
 LoadedObjModel myExample;
+LoadedObjModel myExampleAss;
 LoadedObjModel myGrandPiano;
+LoadedObjModel myGrandPianoAss;
 
 GLuint tex0;
 GLuint tex1;
@@ -265,8 +100,11 @@ void initOpenGLProgram(GLFWwindow* window) {
 	myCube = LoadedObjModel(myCubeVertices, myCubeNormals, myCubeTexCoords, myCubeVertexCount, &tex0, &tex1);
 	myCube.setColors(myCubeColors);
 	myExample = LoadedObjModel("example.obj", &tex1, &tex2);
-	myGrandPiano = LoadedObjModel("grandPiano.obj");
-
+	printf("Vertexesstare: %d\n",myExample._verticesCount);
+	DoTheImportThing("testCube.obj", &myCubeAss);
+	DoTheImportThing("example.obj",&myExampleAss);
+	DoTheImportThing("grandPiano.fbx", &myGrandPianoAss);
+	//myGrandPiano = LoadedObjModel("grandPiano.obj");
 	sp=new ShaderProgram("v_simplest.glsl",NULL,"f_simplest.glsl");
 }
 
@@ -307,16 +145,16 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	glUniform1f(sp->u("textureless"), 0);
 
 	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
-    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0, myGrandPiano._vertices); //Wskaż tablicę z danymi dla atrybutu vertex
+    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0, myCubeAss._vertices); //Wskaż tablicę z danymi dla atrybutu vertex
 
 	glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu color
 	glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, myCube._colors); //Wskaż tablicę z danymi dla atrybutu color
 
 	glEnableVertexAttribArray(sp->a("normal"));  //Włącz przesyłanie danych do atrybutu normal
-	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT , false, 0, myGrandPiano._normals); //Wskaż tablicę z danymi dla atrybutu normal
+	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT , false, 0, myCubeAss._normals); //Wskaż tablicę z danymi dla atrybutu normal
 	
 	glEnableVertexAttribArray(sp->a("texCoord0"));  //Włącz przesyłanie danych do atrybutu texcoord
-	glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, myGrandPiano._texCoords);
+	glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, myCubeAss._texCoords);
 
 	glUniform1i(sp->u("textureMap0"), 0);
 	glActiveTexture(GL_TEXTURE0);
@@ -326,7 +164,7 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, tex1);
 
-	glDrawArrays(GL_TRIANGLES, 0, myGrandPiano._verticesCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES, 0, myCubeAss._verticesCount); //Narysuj obiekt
 
     glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
 	glDisableVertexAttribArray(sp->a("color"));  //Wyłącz przesyłanie danych do atrybutu color

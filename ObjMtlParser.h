@@ -9,6 +9,10 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h> 
+#include <assimp/postprocess.h> 
+
 
 class ObjMtlParser
 {
@@ -33,8 +37,6 @@ public:
 	float* _texCoords;
 	float* _colors = NULL;
 	int _verticesCount;
-
-private:
 	GLuint* _tex;
 	GLuint* _texspec;
 	std::vector <glm::vec4> vecVertices;
@@ -56,6 +58,8 @@ public:
 		const char* model_path,
 		GLuint* tex_ptr = NULL,
 		GLuint* texspec_ptr = NULL);
+	LoadedObjModel(
+		const aiScene* sc);
 
 	GLuint tex();
 
@@ -73,4 +77,6 @@ public:
 		float* colors
 	);
 };
+
+bool DoTheImportThing(const std::string& pFile, LoadedObjModel* model);
 

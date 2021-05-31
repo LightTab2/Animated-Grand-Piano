@@ -2,6 +2,9 @@
 #include <vector>
 #include <string>
 #include "lodepng.h"
+#include <assimp/scene.h>
+
+
 
 bool ObjMtlParser::loadOBJ(
 	const char* path,
@@ -139,6 +142,29 @@ LoadedObjModel::LoadedObjModel(const char* model_path, GLuint* tex_ptr, GLuint* 
 	_texspec = texspec_ptr;	
 }
 
+LoadedObjModel::LoadedObjModel(const aiScene* sc)
+{
+	for (int i = 0; i < sc->mMeshes[0]->mNumVertices; i++)
+	{
+		vecVertices.push_back(glm::vec4(sc->mMeshes[0]->mVertices[i].x, sc->mMeshes[0]->mVertices[i].y, sc->mMeshes[0]->mVertices[i].z, 1));
+		//printf("Vertex %d: %f, %f, %f\n",i, sc->mMeshes[0]->mVertices[i].x, sc->mMeshes[0]->mVertices[i].y, sc->mMeshes[0]->mVertices[i].z);
+	}
+	for (int i = 0; i < sc->mMeshes[0]->mNumVertices; i++)
+	{
+		vecNormals.push_back(glm::vec4(sc->mMeshes[0]->mNormals[i].x, sc->mMeshes[0]->mNormals[i].y, sc->mMeshes[0]->mNormals[i].z, 0));
+		//printf("Normals %d: %f, %f, %f\n", i, sc->mMeshes[0]->mNormals[i].x, sc->mMeshes[0]->mNormals[i].y, sc->mMeshes[0]->mNormals[i].z);
+	}
+	for (int i = 0; i < sc->mMeshes[0]->mNumVertices; i++)
+		vecTexCoords.push_back(glm::vec2(sc->mMeshes[0]->mTextureCoords[0][i].x, sc->mMeshes[0]->mTextureCoords[0][i].y));
+	//for (int i = 0; i < sc->mMeshes[0]->mNumVertices; i++)
+	//	printf("TexCord %d : %f", i, sc->mMeshes[0]->mTextureCoords[i]);
+	printf("Loaded\n");
+	_vertices = &vecVertices[0].x;
+	_normals = &vecNormals[0].x;
+	_texCoords = &vecTexCoords[0].x;
+	_verticesCount = vecVertices.size();
+}
+
 GLuint LoadedObjModel::tex()
 {		
 	return *_tex;
@@ -162,4 +188,18 @@ void LoadedObjModel::setTex_spec(GLuint* texspec_ptr)
 void LoadedObjModel::setColors(float* colors)
 {
 	_colors = colors;
+}
+
+bool DoTheImportThing(const std::string& pFile, LoadedObjModel* model) {
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(pFile, 0);
+
+	if (!scene) {
+		return false;
+	}
+
+	printf("Vertexes: %d\n", scene->mMeshes[0]->mNumVertices);
+	*model = LoadedObjModel(scene);
+	printf("Loaded ASS: %s\n", &pFile);
+	return true;
 }
