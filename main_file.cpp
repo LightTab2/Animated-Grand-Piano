@@ -48,11 +48,12 @@ ShaderProgram *sp;
 LoadedObjModel myGrandPianoassimp;
 
 LoadedObjModel myCube;
-LoadedObjModel myCubeAss;
+LoadedObjModel* myPorscheAss;
 LoadedObjModel myExample;
-LoadedObjModel myExampleAss;
-LoadedObjModel myGrandPiano;
-LoadedObjModel myGrandPianoAss;
+LoadedObjModel* myExampleAss;
+LoadedObjModel* myGrandPiano;
+LoadedObjModel* myGrandPianoAss;
+LoadedObjModel* ptrModel;
 
 GLuint tex0;
 GLuint tex1;
@@ -94,17 +95,23 @@ void initOpenGLProgram(GLFWwindow* window) {
 	glEnable(GL_DEPTH_TEST);
 	glfwSetWindowSizeCallback(window,windowResizeCallback);
 	glfwSetKeyCallback(window,keyCallback);
-	tex0 = ObjMtlParser::readTexture("metal.png");
-	tex1 = ObjMtlParser::readTexture("metal_spec.png");
+
+
+
+	tex0 = ObjMtlParser::readTexture("porsche944_car_AlbedoTransparency.png");
+	tex1 = ObjMtlParser::readTexture("porsche944_car_MetallicSmoothness.png");
 	tex2 = ObjMtlParser::readTexture("stone-wall.png");
 	myCube = LoadedObjModel(myCubeVertices, myCubeNormals, myCubeTexCoords, myCubeVertexCount, &tex0, &tex1);
 	myCube.setColors(myCubeColors);
-	myExample = LoadedObjModel("example.obj", &tex1, &tex2);
-	printf("Vertexesstare: %d\n",myExample._verticesCount);
-	DoTheImportThing("testCube.obj", &myCubeAss);
-	DoTheImportThing("example.obj",&myExampleAss);
-	DoTheImportThing("grandPiano.fbx", &myGrandPianoAss);
-	//myGrandPiano = LoadedObjModel("grandPiano.obj");
+	loadObj("porsche944.fbx", &myPorscheAss,4, aiProcess_Triangulate | aiProcess_ConvertToLeftHanded);
+	//myPorscheAss->loadTex("porsche944_car_AlbedoTransparency.png");
+	//myPorscheAss->loadTex_spec("porsche944_car_MetallicSmoothness.png");
+	loadObj("example.obj",&myExampleAss);
+	loadObj("grandPiano.fbx", &myGrandPianoAss,1, aiProcess_ConvertToLeftHanded);
+	loadObj("grandPiano.obj", &myGrandPiano,0 , aiProcess_ConvertToLeftHanded);
+
+	ptrModel = myPorscheAss;		//ptr na model to testów
+
 	sp=new ShaderProgram("v_simplest.glsl",NULL,"f_simplest.glsl");
 }
 
@@ -115,6 +122,7 @@ void freeOpenGLProgram(GLFWwindow* window) {
 	glDeleteTextures(1, &tex0);
 	glDeleteTextures(1, &tex1);
 	glDeleteTextures(1, &tex2);
+
     delete sp;
 }
 
@@ -123,18 +131,17 @@ void freeOpenGLProgram(GLFWwindow* window) {
 void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	//************Tutaj umieszczaj kod rysujący obraz******************l
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	glm::mat4 V=glm::lookAt(
-         glm::vec3(0, 9, -16.5),
+         glm::vec3(12, 0.0, 0.0),
          glm::vec3(0,0,0),
          glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz widoku
 
-    glm::mat4 P=glm::perspective(50.0f*PI/180.0f, aspectRatio, 0.01f, 50.0f); //Wylicz macierz rzutowania
+    glm::mat4 P=glm::perspective(50.0f*PI/180.0f, aspectRatio, 0.01f, 10000.0f); //Wylicz macierz rzutowania
 
     glm::mat4 M=glm::mat4(1.0f);
 	M=glm::rotate(M,angle_y,glm::vec3(1.0f,0.0f,0.0f)); //Wylicz macierz modelu
 	M=glm::rotate(M,angle_x,glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz modelu
-
+	M = glm::scale(M, glm::vec3(0.01f, 0.01f, 0.01f));
 
     sp->use();//Aktywacja programu cieniującego
     //Przeslij parametry programu cieniującego do karty graficznej
@@ -142,19 +149,21 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
     glUniformMatrix4fv(sp->u("V"),1,false,glm::value_ptr(V));
     glUniformMatrix4fv(sp->u("M"),1,false,glm::value_ptr(M));
 	
-	glUniform1f(sp->u("textureless"), 0);
+	glUniform1f(sp->u("textureless"), 0);	   //uzyj tekstur 0/1
+
+	glUniform4f(sp->u("ls"), 12, 0.0, 0.0,0); //light source
 
 	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
-    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0, myCubeAss._vertices); //Wskaż tablicę z danymi dla atrybutu vertex
+    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0, ptrModel->_vertices); //Wskaż tablicę z danymi dla atrybutu vertex
 
 	glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu color
 	glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, myCube._colors); //Wskaż tablicę z danymi dla atrybutu color
 
 	glEnableVertexAttribArray(sp->a("normal"));  //Włącz przesyłanie danych do atrybutu normal
-	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT , false, 0, myCubeAss._normals); //Wskaż tablicę z danymi dla atrybutu normal
+	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT , false, 0, ptrModel->_normals); //Wskaż tablicę z danymi dla atrybutu normal
 	
 	glEnableVertexAttribArray(sp->a("texCoord0"));  //Włącz przesyłanie danych do atrybutu texcoord
-	glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, myCubeAss._texCoords);
+	glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, ptrModel->_texCoords);
 
 	glUniform1i(sp->u("textureMap0"), 0);
 	glActiveTexture(GL_TEXTURE0);
@@ -164,11 +173,16 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, tex1);
 
-	glDrawArrays(GL_TRIANGLES, 0, myCubeAss._verticesCount); //Narysuj obiekt
+	if(ptrModel->hasIndexes==0)
+	glDrawArrays(GL_TRIANGLES, 0, ptrModel->_verticesCount); //Narysuj obiekt
+	else
+	glDrawElements(GL_TRIANGLES, ptrModel->hasIndexes, GL_UNSIGNED_INT, ptrModel->_indexes);
+
 
     glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
 	glDisableVertexAttribArray(sp->a("color"));  //Wyłącz przesyłanie danych do atrybutu color
 	glDisableVertexAttribArray(sp->a("normal"));  //Wyłącz przesyłanie danych do atrybutu normal
+	glDisableVertexAttribArray(sp->a("texCoord0"));
 
     glfwSwapBuffers(window); //Przerzuć tylny bufor na przedni
 }

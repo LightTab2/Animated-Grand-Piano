@@ -6,90 +6,6 @@
 
 
 
-bool ObjMtlParser::loadOBJ(
-	const char* path,
-	std::vector < glm::vec4 >& out_vertices,
-	std::vector < glm::vec2 >& out_uvs,
-	std::vector < glm::vec4 >& out_normals
-)
-{
-	std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
-	std::vector< glm::vec4 > temp_vertices;
-	std::vector< glm::vec2 > temp_uvs;
-	std::vector< glm::vec4 > temp_normals;
-
-	FILE* file = fopen(path, "r");
-	if (file == NULL) {
-		printf("Impossible to open the file !\n");
-		return false;
-	}
-
-	while (1) {
-
-		char lineHeader[128];
-		// read the first word of the line
-		int res = fscanf(file, "%s", lineHeader);
-		if (res == EOF)
-			break; // EOF = End Of File. Quit the loop.
-
-		// else : parse lineHeader
-		if (strcmp(lineHeader, "v") == 0) {
-			glm::vec4 vertex;
-			fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
-			vertex.w = 1;
-			temp_vertices.push_back(vertex);
-		}
-		else if (strcmp(lineHeader, "vt") == 0) {
-			glm::vec2 uv;
-			fscanf(file, "%f %f\n", &uv.x, &uv.y);
-			temp_uvs.push_back(uv);
-		}
-		else if (strcmp(lineHeader, "vn") == 0) {
-			glm::vec4 normal;
-			fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
-			normal.w = 0;
-			temp_normals.push_back(normal);
-		}
-		else if (strcmp(lineHeader, "f") == 0) {
-			std::string vertex1, vertex2, vertex3;
-			unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-			int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2]);
-			if (matches != 9) {
-				printf("File can't be read by our simple parser : ( Try exporting with other options\n");
-				return false;
-			}
-			vertexIndices.push_back(vertexIndex[0]);
-			vertexIndices.push_back(vertexIndex[1]);
-			vertexIndices.push_back(vertexIndex[2]);
-			uvIndices.push_back(uvIndex[0]);
-			uvIndices.push_back(uvIndex[1]);
-			uvIndices.push_back(uvIndex[2]);
-			normalIndices.push_back(normalIndex[0]);
-			normalIndices.push_back(normalIndex[1]);
-			normalIndices.push_back(normalIndex[2]);
-		}
-	}
-	// For each vertex of each triangle
-	for (unsigned int i = 0; i < vertexIndices.size(); i++) {
-		unsigned int vertexIndex = vertexIndices[i];
-		glm::vec4 vertex = temp_vertices[vertexIndex - 1];
-		out_vertices.push_back(vertex);
-	}
-	// For each uv of each triangle
-	for (unsigned int i = 0; i < uvIndices.size(); i++) {
-		unsigned int uvIndex = uvIndices[i];
-		glm::vec2 uv = temp_uvs[uvIndex - 1];
-		out_uvs.push_back(uv);
-	}
-	// For each normal of each triangle
-	for (unsigned int i = 0; i < normalIndices.size(); i++) {
-		unsigned int normalIndex = normalIndices[i];
-		glm::vec4 normal = temp_normals[normalIndex - 1];
-		out_normals.push_back(normal);
-	}
-	return true;
-}
-
 GLuint ObjMtlParser::readTexture(const char* filename) {
 	GLuint tex;
 	glActiveTexture(GL_TEXTURE0);
@@ -113,76 +29,149 @@ GLuint ObjMtlParser::readTexture(const char* filename) {
 	
 LoadedObjModel::LoadedObjModel() {}
 
-	
+LoadedObjModel::~LoadedObjModel() 
+{
+	if (!_dataPointedOutside)
+	{
+		if (_vertices!=NULL)
+		delete[] _vertices;
+		if (_normals != NULL)
+		delete[] _normals;
+		if (_texCoords != NULL)
+		delete[] _texCoords;
+		//if (_colors != NULL)
+		delete[] _colors;
+		if (_indexes != NULL)
+		delete[] _indexes;
+	}
+
+	this->delete_tex();
+	this->delete_texspec();
+
+}
+
 LoadedObjModel::LoadedObjModel(float* vertices, float* normals, float* texCords, int verticesCount, GLuint* tex_ptr , GLuint* texspec_ptr)
 {
+	_dataPointedOutside = true;
 	_vertices = vertices;
 	_normals = normals;
 	_texCoords = texCords;
 	_verticesCount = verticesCount;
-	_tex = tex_ptr;
-	_texspec = texspec_ptr;
+	_tex_ptr = tex_ptr;
+	_texspec_ptr = texspec_ptr;
 }
 
-LoadedObjModel::LoadedObjModel(const char* model_path, GLuint* tex_ptr, GLuint* texspec_ptr)
+LoadedObjModel::LoadedObjModel(const aiScene* sc, int id)
 {
-	//model loading
-	if (!ObjMtlParser::loadOBJ(model_path, vecVertices, vecTexCoords, vecNormals))
+	_dataPointedOutside = false;
+	printf("Name: %s\n", sc->mMeshes[id]->mName.C_Str());
+	printf("Meshes: %d\n", sc->mNumMeshes);
+	printf("Vertexes: %d\n", sc->mMeshes[id]->mNumVertices);
+	_vertices = new float[4*sc->mMeshes[id]->mNumVertices];
+	for (int i = 0; i < sc->mMeshes[id]->mNumVertices; i++)
 	{
-		printf("Model not loaded: %s\n", model_path);
-	}//procedura bledu TODO
-	else
-	{
-		printf("Model loaded: %s\n", model_path);
-		_vertices = &vecVertices[0].x;
-		_normals = &vecNormals[0].x;
-		_texCoords = &vecTexCoords[0].x;
-		_verticesCount = vecVertices.size();
-	}	_tex = tex_ptr;
-	_texspec = texspec_ptr;	
-}
+		_vertices[i * 4] = sc->mMeshes[id]->mVertices[i].x;
+		_vertices[i * 4+1] = sc->mMeshes[id]->mVertices[i].y;
+		_vertices[i * 4+2] = sc->mMeshes[id]->mVertices[i].z;
+		_vertices[i * 4 + 3] = 1;
+	}
 
-LoadedObjModel::LoadedObjModel(const aiScene* sc)
-{
-	for (int i = 0; i < sc->mMeshes[0]->mNumVertices; i++)
+	_normals = new float[4 * sc->mMeshes[id]->mNumVertices];
+	for (int i = 0; i < sc->mMeshes[id]->mNumVertices; i++)
 	{
-		vecVertices.push_back(glm::vec4(sc->mMeshes[0]->mVertices[i].x, sc->mMeshes[0]->mVertices[i].y, sc->mMeshes[0]->mVertices[i].z, 1));
-		//printf("Vertex %d: %f, %f, %f\n",i, sc->mMeshes[0]->mVertices[i].x, sc->mMeshes[0]->mVertices[i].y, sc->mMeshes[0]->mVertices[i].z);
+		_normals[i * 4] = sc->mMeshes[id]->mNormals[i].x;
+		_normals[i * 4 + 1] = sc->mMeshes[id]->mNormals[i].y;
+		_normals[i * 4 + 2] = sc->mMeshes[id]->mNormals[i].z;
+		_normals[i * 4 + 3] = 0;
 	}
-	for (int i = 0; i < sc->mMeshes[0]->mNumVertices; i++)
+	printf("mNumFaces: %d\n", sc->mMeshes[id]->mNumFaces);
+	_indexes = new unsigned int[3 * sc->mMeshes[id]->mNumFaces];
+	for (int i = 0; i < sc->mMeshes[id]->mNumFaces; i++)
 	{
-		vecNormals.push_back(glm::vec4(sc->mMeshes[0]->mNormals[i].x, sc->mMeshes[0]->mNormals[i].y, sc->mMeshes[0]->mNormals[i].z, 0));
-		//printf("Normals %d: %f, %f, %f\n", i, sc->mMeshes[0]->mNormals[i].x, sc->mMeshes[0]->mNormals[i].y, sc->mMeshes[0]->mNormals[i].z);
+		_indexes[i * 3]=sc->mMeshes[id]->mFaces[i].mIndices[0];
+		_indexes[i * 3 + 1] = sc->mMeshes[id]->mFaces[i].mIndices[1];
+		_indexes[i * 3 + 2] = sc->mMeshes[id]->mFaces[i].mIndices[2];
 	}
-	for (int i = 0; i < sc->mMeshes[0]->mNumVertices; i++)
-		vecTexCoords.push_back(glm::vec2(sc->mMeshes[0]->mTextureCoords[0][i].x, sc->mMeshes[0]->mTextureCoords[0][i].y));
-	//for (int i = 0; i < sc->mMeshes[0]->mNumVertices; i++)
-	//	printf("TexCord %d : %f", i, sc->mMeshes[0]->mTextureCoords[i]);
+	hasIndexes = 3 * sc->mMeshes[id]->mNumFaces;
+
+	for (int i = 0 ; i < 8 ; i++)printf("Texture Set %d: %s\n",i, sc->mMeshes[id]->HasTextureCoords(i)? "true" : "false");
+	
+	if (sc->mMeshes[id]->HasTextureCoords(0))
+	{	
+		_texCoords = new float[2 * 3 * sc->mMeshes[id]->mNumFaces];
+		for (int i = 0; i < 3 * sc->mMeshes[id]->mNumFaces; i++)
+		{
+			_texCoords[i * 2] = sc->mMeshes[id]->mTextureCoords[0][i].x;
+			_texCoords[i * 2 + 1] = sc->mMeshes[id]->mTextureCoords[0][i].y;
+		}
+	}
+	if (sc->HasTextures())
+	{
+		glGenTextures(1, &_tex); //Zainicjuj jeden uchwyt
+		glBindTexture(GL_TEXTURE_2D, _tex); //Uaktywnij uchwyt
+		glTexImage2D(GL_TEXTURE_2D, 0, 4, sc->mTextures[0]->mWidth, sc->mTextures[0]->mHeight, 0,
+			GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char*)sc->mTextures[0]->pcData);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		printf("texture loaded\n");
+	}
+
+	printf("Primitives: %d\n", sc->mMeshes[id]->mPrimitiveTypes);
+	_verticesCount = sc->mMeshes[id]->mNumVertices;
 	printf("Loaded\n");
-	_vertices = &vecVertices[0].x;
-	_normals = &vecNormals[0].x;
-	_texCoords = &vecTexCoords[0].x;
-	_verticesCount = vecVertices.size();
 }
 
 GLuint LoadedObjModel::tex()
 {		
-	return *_tex;
+	return *_tex_ptr;
 }
 
 GLuint LoadedObjModel::tex_spec()
 {
-	return *_texspec;
+	return *_texspec_ptr;
 }
 
-void LoadedObjModel::setTex(GLuint* tex_ptr)
+void LoadedObjModel::setTexPtr(GLuint* tex_ptr)
 {
-	_tex = tex_ptr;
+	_tex_ptr = tex_ptr;
 }
 
-void LoadedObjModel::setTex_spec(GLuint* texspec_ptr)
+void LoadedObjModel::setTex_specPtr(GLuint* texspec_ptr)
 {
-	_texspec = texspec_ptr;
+	_texspec_ptr = texspec_ptr;
+}
+
+void LoadedObjModel::setTex(GLuint tex)
+{
+	_tex = tex;
+}
+
+
+void LoadedObjModel::setTex_spec(GLuint texspec)
+{
+	_texspec = texspec;
+}
+
+void LoadedObjModel::loadTex(const char* filename)
+{
+	_tex = ObjMtlParser::readTexture(filename);
+	_tex_ptr = &_tex;
+}
+
+void LoadedObjModel::loadTex_spec(const char* filename)
+{
+	_texspec = ObjMtlParser::readTexture(filename);
+	_texspec_ptr = &_texspec;
+}
+
+
+void LoadedObjModel::delete_tex()
+{
+	glDeleteTextures(1, &_tex);
+}
+void LoadedObjModel::delete_texspec()
+{
+	glDeleteTextures(1, &_texspec);
 }
 
 void LoadedObjModel::setColors(float* colors)
@@ -190,16 +179,14 @@ void LoadedObjModel::setColors(float* colors)
 	_colors = colors;
 }
 
-bool DoTheImportThing(const std::string& pFile, LoadedObjModel* model) {
+bool loadObj(const std::string& pFile, LoadedObjModel** model,int id, int aibit) {
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(pFile, 0);
+	const aiScene* scene = importer.ReadFile(pFile, aiProcess_Triangulate| aiProcess_FlipUVs);
 
 	if (!scene) {
 		return false;
 	}
-
-	printf("Vertexes: %d\n", scene->mMeshes[0]->mNumVertices);
-	*model = LoadedObjModel(scene);
-	printf("Loaded ASS: %s\n", &pFile);
+	*model = new LoadedObjModel(scene, id);
+	printf("Loaded ASS: %s\n\n", &pFile);
 	return true;
 }

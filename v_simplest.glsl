@@ -5,6 +5,7 @@ uniform mat4 P;
 uniform mat4 V;
 uniform mat4 M;
 uniform float textureless;
+uniform vec4 ls;
 
 //Atrybuty
 in vec4 vertex; //wspolrzedne wierzcholka w przestrzeni modelu
@@ -20,7 +21,7 @@ out vec4 v;
 out vec2 iTexCoord0;
 
 void main(void) {
-    vec4 lp = vec4(0, 0, -6, 1); //pozcyja światła, przestrzeń świata
+    vec4 lp =ls;//vec4(0, 280.0, 10.0, 1); //pozcyja światła, przestrzeń świata
     l = normalize(V * lp - V*M*vertex); //wektor do światła w przestrzeni oka
     v = normalize(vec4(0, 0, 0, 1) - V * M * vertex); //wektor do obserwatora w przestrzeni oka
     n = normalize(V * M * normal); //wektor normalny w przestrzeni oka

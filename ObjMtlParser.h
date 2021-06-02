@@ -17,14 +17,6 @@
 class ObjMtlParser
 {
 public:
-static bool loadOBJ(
-		const char* path,
-		std::vector < glm::vec4 >& out_vertices,
-		std::vector < glm::vec2 >& out_uvs,
-		std::vector < glm::vec4 >& out_normals
-	);
-
-
 static GLuint readTexture(
 		const char* filename
 	);
@@ -32,19 +24,23 @@ static GLuint readTexture(
 
 class LoadedObjModel {
 public:
-	float* _vertices;
-	float* _normals;
-	float* _texCoords;
+	bool _dataPointedOutside = false;
+	float* _vertices = NULL;
+	float* _normals = NULL;
+	float* _texCoords = NULL;
 	float* _colors = NULL;
+	unsigned int* _indexes;
 	int _verticesCount;
-	GLuint* _tex;
-	GLuint* _texspec;
-	std::vector <glm::vec4> vecVertices;
-	std::vector <glm::vec2> vecTexCoords;
-	std::vector <glm::vec4> vecNormals;
+	GLuint _tex;
+	GLuint* _tex_ptr;
+	GLuint _texspec;
+	GLuint* _texspec_ptr;
+	unsigned int hasIndexes = 0;
 
 public:
 	LoadedObjModel();
+
+	~LoadedObjModel();
 
 	LoadedObjModel(
 		float* vertices,
@@ -59,24 +55,45 @@ public:
 		GLuint* tex_ptr = NULL,
 		GLuint* texspec_ptr = NULL);
 	LoadedObjModel(
-		const aiScene* sc);
+		const aiScene* sc,
+		int id = 0
+	);
 
 	GLuint tex();
 
 	GLuint tex_spec();
 
-	void setTex(
+	void setTexPtr(
 		GLuint* tex_ptr
 	);
 
-	void setTex_spec(
+	void setTex_specPtr(
 		GLuint* texspec_ptr
 	);
+
+	void setTex(
+		GLuint tex
+	);
+
+	void setTex_spec(
+		GLuint texspec
+	);
+
+	void loadTex(
+		const char* filename
+	);
+
+	void loadTex_spec(
+		const char* filename
+	);
+
+	void delete_tex();
+	void delete_texspec();
 
 	void setColors(
 		float* colors
 	);
 };
 
-bool DoTheImportThing(const std::string& pFile, LoadedObjModel* model);
+bool loadObj(const std::string& pFile, LoadedObjModel** model, int id=0,int aibit=0);
 
