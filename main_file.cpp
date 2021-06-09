@@ -104,11 +104,11 @@ void initOpenGLProgram(GLFWwindow* window) {
 	myCube = LoadedObjModel(myCubeVertices, myCubeNormals, myCubeTexCoords, myCubeVertexCount, &tex0, &tex1);
 	myCube.setColors(myCubeColors);
 	loadObj("porsche944.fbx", &myPorscheAss,4, aiProcess_Triangulate | aiProcess_ConvertToLeftHanded);
-	//myPorscheAss->loadTex("porsche944_car_AlbedoTransparency.png");
-	//myPorscheAss->loadTex_spec("porsche944_car_MetallicSmoothness.png");
+	myPorscheAss->loadTex("porsche944_car_AlbedoTransparency.png");
+	myPorscheAss->loadTex_spec("porsche944_car_MetallicSmoothness.png");
 	loadObj("example.obj",&myExampleAss);
-	loadObj("grandPiano.fbx", &myGrandPianoAss,1, aiProcess_ConvertToLeftHanded);
-	loadObj("grandPiano.obj", &myGrandPiano,0 , aiProcess_ConvertToLeftHanded);
+	//loadObj("grandPiano.fbx", &myGrandPianoAss,1, aiProcess_ConvertToLeftHanded);
+	//loadObj("grandPiano.obj", &myGrandPiano,0 , aiProcess_ConvertToLeftHanded);
 
 	ptrModel = myPorscheAss;		//ptr na model to testów
 
@@ -140,7 +140,7 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 
     glm::mat4 M=glm::mat4(1.0f);
 	M=glm::rotate(M,angle_y,glm::vec3(1.0f,0.0f,0.0f)); //Wylicz macierz modelu
-	M=glm::rotate(M,angle_x,glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz modelu
+	M=glm::rotate(M,angle_x,glm::vec3(0.0f,0.0f,1.0f)); //Wylicz macierz modelu
 	M = glm::scale(M, glm::vec3(0.01f, 0.01f, 0.01f));
 
     sp->use();//Aktywacja programu cieniującego
@@ -167,11 +167,11 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 
 	glUniform1i(sp->u("textureMap0"), 0);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tex0);
+	glBindTexture(GL_TEXTURE_2D, ptrModel->_tex);
 
 	glUniform1i(sp->u("textureMap1"), 1);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, tex1);
+	glBindTexture(GL_TEXTURE_2D, ptrModel->_texspec);
 
 	if(ptrModel->hasIndexes==0)
 	glDrawArrays(GL_TRIANGLES, 0, ptrModel->_verticesCount); //Narysuj obiekt
