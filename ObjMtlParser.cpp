@@ -190,3 +190,32 @@ bool loadObj(const std::string& pFile, LoadedObjModel** model,int id, int aibit)
 	printf("Loaded ASS: %s\n\n", &pFile);
 	return true;
 }
+
+bool loadMultipleObj(const std::string& pFile, LoadedObjModel*** model, int n, int aibit) {
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(pFile, aiProcess_Triangulate | aiProcess_FlipUVs);
+
+	if (!scene) {
+		return false;
+	}
+	for(int i = 0 ; i < n ; i++)
+		*model[i] = new LoadedObjModel(scene, i);
+	printf("Loaded ASS: %s\n\n", &pFile);
+	return true;
+}
+
+bool loadAnimationObj(const std::string* pFile, LoadedObjModel** model, int n, int aibit) {
+	Assimp::Importer importer;
+
+	for(int i = 0 ; i < n ; i ++)
+	{
+		printf("Loading ASS: %s\n", pFile[i]);
+		const aiScene* scene = importer.ReadFile(pFile[i], aiProcess_Triangulate | aiProcess_FlipUVs);
+		if (!scene) {
+			return false;
+		}
+		model[i] = new LoadedObjModel(scene, 0);
+		printf("Loaded ASS: %s\n\n", pFile[i]);
+	}
+	return true;
+}

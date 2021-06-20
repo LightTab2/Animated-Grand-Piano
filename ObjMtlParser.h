@@ -96,4 +96,6 @@ public:
 };
 
 bool loadObj(const std::string& pFile, LoadedObjModel** model, int id=0,int aibit=0);
+bool loadMultipleObj(const std::string& pFile, LoadedObjModel*** model, int n, int aibit=0);
+bool loadAnimationObj(const std::string* pFile, LoadedObjModel** model, int n, int aibit = 0);
 
