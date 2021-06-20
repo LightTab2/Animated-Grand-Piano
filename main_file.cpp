@@ -43,27 +43,59 @@ float aspectRatio=1;
 
 ShaderProgram *sp;
 
+LoadedObjModel* ToyPianoBase;
+LoadedObjModel* ToyPianoHammer;
+glm::vec3 HammerPositions[8] =
+{
+	glm::vec3(-0.574033f, 0.564779f, 0.566373f),
+	glm::vec3(-0.4389f, 0.564779f, 0.566373f),
+	glm::vec3(-0.285781f, 0.564779f, 0.566373f),
+	glm::vec3(-0.127831f, 0.564779f, 0.566373f),
 
+	glm::vec3(0.051862f, 0.564779f, 0.566373f),
+	glm::vec3(0.204517f, 0.564779f, 0.566373f),
+	glm::vec3(0.366092f, 0.564779f, 0.566373f),
+	glm::vec3(0.520791f, 0.564779f, 0.566373f)
+};
+float HammerAngles[8]=
+{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
-LoadedObjModel myGrandPianoassimp;
+LoadedObjModel* ToyPianoLid;
+float lidAngle = 15.0f * PI / 180.0f;
+double lidAnimationTime = 3;
+double lidAnimationTimeEnd = 2;
+bool lidOpen = false;
 
-LoadedObjModel myCube;
-LoadedObjModel* myPorscheAss;
-LoadedObjModel myExample;
-LoadedObjModel* myExampleAss;
-LoadedObjModel* myGrandPiano;
-LoadedObjModel* myGrandPianoAss;
-LoadedObjModel* ptrModel;
+LoadedObjModel* ToyPianoButtons[8];
+bool ToyPianoButtonsPress[8] = { false, false, false, false, false, false, false, false, };
+double ButtonAnimationTime[8] = { 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f};
+double ButtonAnimationTimeEnd = 0.1f;
+float ToyPianoButtonsDepth[8] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+float ToyPianoBUttonDepthEnd = 0.066f;
 
-GLuint tex0;
-GLuint tex1;
-GLuint tex2;
-
+glm::vec4 LightSource1 = glm::vec4(0, 12, 0,0);
 
 
 //Procedura obsługi błędów
 void error_callback(int error, const char* description) {
 	fputs(description, stderr);
+}
+
+void PianoPress(int i = 0)
+{
+	ToyPianoButtonsPress[i] = true;
+	if (ButtonAnimationTime[i] <= ButtonAnimationTimeEnd)
+		ButtonAnimationTime[i] = ButtonAnimationTimeEnd - ButtonAnimationTime[i];
+	else
+		ButtonAnimationTime[i] = 0;
+}
+void PianoRelease(int i = 0)
+{
+	ToyPianoButtonsPress[i] = false;
+	if (ButtonAnimationTime[i] <= ButtonAnimationTimeEnd)
+		ButtonAnimationTime[i] = ButtonAnimationTimeEnd - ButtonAnimationTime[i];
+	else
+		ButtonAnimationTime[i] = 0;
 }
 
 
@@ -73,12 +105,84 @@ void keyCallback(GLFWwindow* window,int key,int scancode,int action,int mods) {
         if (key==GLFW_KEY_RIGHT) speed_x=PI/2;
         if (key==GLFW_KEY_UP) speed_y=PI/2;
         if (key==GLFW_KEY_DOWN) speed_y=-PI/2;
+		if (key == GLFW_KEY_O)
+		{
+			lidOpen = !lidOpen;
+			if (lidAnimationTime <= lidAnimationTimeEnd)
+				lidAnimationTime = lidAnimationTimeEnd - lidAnimationTime;
+			else
+				lidAnimationTime = 0;
+		}
+		if (key == GLFW_KEY_A)
+		{
+			PianoPress(0);
+		}
+		if (key == GLFW_KEY_S)
+		{
+			PianoPress(1);
+		}
+		if (key == GLFW_KEY_D)
+		{
+			PianoPress(2);
+		}
+		if (key == GLFW_KEY_F)
+		{
+			PianoPress(3);
+		}
+		if (key == GLFW_KEY_G)
+		{
+			PianoPress(4);
+		}
+		if (key == GLFW_KEY_H)
+		{
+			PianoPress(5);
+		}
+		if (key == GLFW_KEY_J)
+		{
+			PianoPress(6);
+		}
+		if (key == GLFW_KEY_K)
+		{
+			PianoPress(7);
+		}
     }
     if (action==GLFW_RELEASE) {
         if (key==GLFW_KEY_LEFT) speed_x=0;
         if (key==GLFW_KEY_RIGHT) speed_x=0;
         if (key==GLFW_KEY_UP) speed_y=0;
         if (key==GLFW_KEY_DOWN) speed_y=0;
+		if (key == GLFW_KEY_A)
+		{
+			PianoRelease(0);
+		}
+		if (key == GLFW_KEY_S)
+		{
+			PianoRelease(1);
+		}
+		if (key == GLFW_KEY_D)
+		{
+			PianoRelease(2);
+		}
+		if (key == GLFW_KEY_F)
+		{
+			PianoRelease(3);
+		}
+		if (key == GLFW_KEY_G)
+		{
+			PianoRelease(4);
+		}
+		if (key == GLFW_KEY_H)
+		{
+			PianoRelease(5);
+		}
+		if (key == GLFW_KEY_J)
+		{
+			PianoRelease(6);
+		}
+		if (key == GLFW_KEY_K)
+		{
+			PianoRelease(7);
+		}
     }
 }
 
@@ -96,21 +200,18 @@ void initOpenGLProgram(GLFWwindow* window) {
 	glfwSetWindowSizeCallback(window,windowResizeCallback);
 	glfwSetKeyCallback(window,keyCallback);
 
+	loadObj("base.obj", &ToyPianoBase);
+	ToyPianoBase->loadTex("TextureBase.png");
+	loadObj("hammernlid.obj", &ToyPianoHammer);
+	ToyPianoHammer->loadTex("TextureBase.png");
+	loadObj("hammernlid.obj", &ToyPianoLid,1);
+	ToyPianoLid->loadTex("TextureBase.png");
 
-
-	tex0 = ObjMtlParser::readTexture("porsche944_car_AlbedoTransparency.png");
-	tex1 = ObjMtlParser::readTexture("porsche944_car_MetallicSmoothness.png");
-	tex2 = ObjMtlParser::readTexture("stone-wall.png");
-	myCube = LoadedObjModel(myCubeVertices, myCubeNormals, myCubeTexCoords, myCubeVertexCount, &tex0, &tex1);
-	myCube.setColors(myCubeColors);
-	loadObj("porsche944.fbx", &myPorscheAss,4, aiProcess_Triangulate | aiProcess_ConvertToLeftHanded);
-	myPorscheAss->loadTex("porsche944_car_AlbedoTransparency.png");
-	myPorscheAss->loadTex_spec("porsche944_car_MetallicSmoothness.png");
-	loadObj("example.obj",&myExampleAss);
-	//loadObj("grandPiano.fbx", &myGrandPianoAss,1, aiProcess_ConvertToLeftHanded);
-	//loadObj("grandPiano.obj", &myGrandPiano,0 , aiProcess_ConvertToLeftHanded);
-
-	ptrModel = myPorscheAss;		//ptr na model to testów
+	for (int i = 0; i < 8; i++)
+	{
+		loadObj("buttons.obj", &ToyPianoButtons[i],i);
+		ToyPianoButtons[i]->loadTex("TextureBase.png");
+	}
 
 	sp=new ShaderProgram("v_simplest.glsl",NULL,"f_simplest.glsl");
 }
@@ -119,49 +220,19 @@ void initOpenGLProgram(GLFWwindow* window) {
 //Zwolnienie zasobów zajętych przez program
 void freeOpenGLProgram(GLFWwindow* window) {
     //************Tutaj umieszczaj kod, który należy wykonać po zakończeniu pętli głównej************
-	glDeleteTextures(1, &tex0);
-	glDeleteTextures(1, &tex1);
-	glDeleteTextures(1, &tex2);
 
     delete sp;
 }
 
 
-//Procedura rysująca zawartość sceny
-void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
-	//************Tutaj umieszczaj kod rysujący obraz******************l
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glm::mat4 V=glm::lookAt(
-         glm::vec3(12, 0.0, 0.0),
-         glm::vec3(0,0,0),
-         glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz widoku
-
-    glm::mat4 P=glm::perspective(50.0f*PI/180.0f, aspectRatio, 0.01f, 10000.0f); //Wylicz macierz rzutowania
-
-    glm::mat4 M=glm::mat4(1.0f);
-	M=glm::rotate(M,angle_y,glm::vec3(1.0f,0.0f,0.0f)); //Wylicz macierz modelu
-	M=glm::rotate(M,angle_x,glm::vec3(0.0f,0.0f,1.0f)); //Wylicz macierz modelu
-	M = glm::scale(M, glm::vec3(0.01f, 0.01f, 0.01f));
-
-    sp->use();//Aktywacja programu cieniującego
-    //Przeslij parametry programu cieniującego do karty graficznej
-    glUniformMatrix4fv(sp->u("P"),1,false,glm::value_ptr(P));
-    glUniformMatrix4fv(sp->u("V"),1,false,glm::value_ptr(V));
-    glUniformMatrix4fv(sp->u("M"),1,false,glm::value_ptr(M));
-	
-	glUniform1f(sp->u("textureless"), 0);	   //uzyj tekstur 0/1
-
-	glUniform4f(sp->u("ls"), 12, 0.0, 0.0,0); //light source
-
+void drawModel(LoadedObjModel* ptrModel)
+{
 	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
-    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0, ptrModel->_vertices); //Wskaż tablicę z danymi dla atrybutu vertex
-
-	glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu color
-	glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, myCube._colors); //Wskaż tablicę z danymi dla atrybutu color
+	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, ptrModel->_vertices); //Wskaż tablicę z danymi dla atrybutu vertex
 
 	glEnableVertexAttribArray(sp->a("normal"));  //Włącz przesyłanie danych do atrybutu normal
-	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT , false, 0, ptrModel->_normals); //Wskaż tablicę z danymi dla atrybutu normal
-	
+	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT, false, 0, ptrModel->_normals); //Wskaż tablicę z danymi dla atrybutu normal
+
 	glEnableVertexAttribArray(sp->a("texCoord0"));  //Włącz przesyłanie danych do atrybutu texcoord
 	glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, ptrModel->_texCoords);
 
@@ -173,16 +244,71 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, ptrModel->_texspec);
 
-	if(ptrModel->hasIndexes==0)
-	glDrawArrays(GL_TRIANGLES, 0, ptrModel->_verticesCount); //Narysuj obiekt
+	if (ptrModel->hasIndexes == 0)
+		glDrawArrays(GL_TRIANGLES, 0, ptrModel->_verticesCount); //Narysuj obiekt
 	else
-	glDrawElements(GL_TRIANGLES, ptrModel->hasIndexes, GL_UNSIGNED_INT, ptrModel->_indexes);
+		glDrawElements(GL_TRIANGLES, ptrModel->hasIndexes, GL_UNSIGNED_INT, ptrModel->_indexes);
 
 
-    glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
 	glDisableVertexAttribArray(sp->a("color"));  //Wyłącz przesyłanie danych do atrybutu color
 	glDisableVertexAttribArray(sp->a("normal"));  //Wyłącz przesyłanie danych do atrybutu normal
 	glDisableVertexAttribArray(sp->a("texCoord0"));
+}
+
+//Procedura rysująca zawartość sceny
+void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
+	//************Tutaj umieszczaj kod rysujący obraz******************l
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glm::mat4 V=glm::lookAt(
+         glm::vec3(-1, 2.5, 1),
+         glm::vec3(-0.5, 0.5, 0.500001),
+         glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz widoku
+    glm::mat4 P=glm::perspective(50.0f*PI/180.0f, aspectRatio, 0.01f, 10000.0f); //Wylicz macierz rzutowania
+
+    glm::mat4 M=glm::mat4(1.0f);
+	M=glm::rotate(M,angle_y,glm::vec3(1.0f,0.0f,0.0f)); //Wylicz macierz modelu
+	M=glm::rotate(M,angle_x,glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz modelu
+
+    sp->use();//Aktywacja programu cieniującego
+
+	//PODSTAWA PIANINA
+	glUniform4fv(sp->u("ls"),4, glm::value_ptr(LightSource1)); //light source
+
+    glUniformMatrix4fv(sp->u("P"),1,false,glm::value_ptr(P));
+    glUniformMatrix4fv(sp->u("V"),1,false,glm::value_ptr(V));
+    glUniformMatrix4fv(sp->u("M"),1,false,glm::value_ptr(M));
+
+	glUniform1f(sp->u("textureless"), 0);	   //uzyj tekstur 0/1
+	drawModel(ToyPianoBase);
+
+	//PRZYCISKI oraz MLOTKI
+	for (int i = 0; i < 8; i++)
+	{
+		glUniform4fv(sp->u("ls"), 4, glm::value_ptr(LightSource1)); //light source
+
+		glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
+		glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+		glm::mat4 Mbutton = glm::translate(M, glm::vec3(0.0f, -ToyPianoButtonsDepth[i], 0.0f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mbutton));
+		drawModel(ToyPianoButtons[i]);
+		glm::mat4 Mhammer = glm::translate(M, HammerPositions[i]);
+		Mhammer = glm::rotate(Mhammer, HammerAngles[i], glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mhammer));
+		drawModel(ToyPianoHammer);
+	}
+
+	//KLAPA
+	glUniform4fv(sp->u("ls"), 4, glm::value_ptr(LightSource1)); //light source
+
+	glm::mat4 Mlid = glm::translate(M, glm::vec3(-0.644877f, 0.740097f, 0.0f)); //Wylicz macierz modelu
+	Mlid = glm::rotate(Mlid, lidAngle, glm::vec3(0.0f, 0.0f, 1.0f)); //Wylicz macierz modelu
+	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mlid));
+	drawModel(ToyPianoLid);
+
 
     glfwSwapBuffers(window); //Przerzuć tylny bufor na przedni
 }
@@ -224,8 +350,63 @@ int main(void)
 	glfwSetTime(0); //Zeruj timer
 	while (!glfwWindowShouldClose(window)) //Tak długo jak okno nie powinno zostać zamknięte
 	{
+		
         angle_x+=speed_x*glfwGetTime(); //Zwiększ/zmniejsz kąt obrotu na podstawie prędkości i czasu jaki upłynał od poprzedniej klatki
         angle_y+=speed_y*glfwGetTime(); //Zwiększ/zmniejsz kąt obrotu na podstawie prędkości i czasu jaki upłynał od poprzedniej klatki
+
+		if (lidAnimationTime <= lidAnimationTimeEnd)
+		{
+			lidAnimationTime = lidAnimationTime + glfwGetTime();
+			if (lidOpen)
+			{
+				if (lidAnimationTime >= lidAnimationTimeEnd)
+					lidAngle = 120.0f * PI / 180.0f;
+				else
+					lidAngle = (15.0f + (105.0f * (lidAnimationTime / lidAnimationTimeEnd))) * PI / 180.0f;
+			}
+			else
+			{
+				if (lidAnimationTime >= lidAnimationTimeEnd)
+					lidAngle = 15.0f * PI / 180.0f;
+				else
+					lidAngle = (120.0f - (105.0f * (lidAnimationTime / lidAnimationTimeEnd))) * PI / 180.0f;
+			}
+		}
+
+		for (int i = 0; i < 8; i++)
+		{
+			if (ButtonAnimationTime[i] <= ButtonAnimationTimeEnd)
+			{
+				ButtonAnimationTime[i] = ButtonAnimationTime[i] + glfwGetTime();
+				if (ToyPianoButtonsPress[i])
+				{
+					if (ButtonAnimationTime[i] >= ButtonAnimationTimeEnd)
+					{
+						HammerAngles[i] = 13.5f * PI / 180.0f;
+						ToyPianoButtonsDepth[i] = ToyPianoBUttonDepthEnd;
+					}
+					else
+					{
+						HammerAngles[i] = (0.0f + (13.5f * (ButtonAnimationTime[i] / ButtonAnimationTimeEnd))) * PI / 180.0f;
+						ToyPianoButtonsDepth[i] = ToyPianoBUttonDepthEnd * (ButtonAnimationTime[i] / ButtonAnimationTimeEnd);
+					}
+				}
+				else
+				{
+					if (ButtonAnimationTime[i] >= ButtonAnimationTimeEnd)
+					{
+						HammerAngles[i] = 0.0f * PI / 180.0f;
+						ToyPianoButtonsDepth[i] = 0;
+					}
+					else
+					{
+						HammerAngles[i] = (13.5f - (13.5f * (ButtonAnimationTime[i] / ButtonAnimationTimeEnd))) * PI / 180.0f;
+						ToyPianoButtonsDepth[i] = ToyPianoBUttonDepthEnd * (1.0f-ButtonAnimationTime[i] / ButtonAnimationTimeEnd);
+					}
+				}
+			}
+		}
+
         glfwSetTime(0); //Zeruj timer
 		drawScene(window,angle_x,angle_y); //Wykonaj procedurę rysującą
 		glfwPollEvents(); //Wykonaj procedury callback w zalezności od zdarzeń jakie zaszły.

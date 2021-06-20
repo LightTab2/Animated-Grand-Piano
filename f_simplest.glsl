@@ -7,7 +7,6 @@ uniform float textureless;
 
 out vec4 pixelColor; //Zmienna wyjsciowa fragment shadera. Zapisuje sie do niej ostateczny (prawie) kolor piksela
 
-in vec4 ic; 
 in vec4 n;
 in vec4 l;
 in vec4 v;

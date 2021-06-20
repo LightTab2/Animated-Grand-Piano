@@ -9,7 +9,6 @@ uniform vec4 ls;
 
 //Atrybuty
 in vec4 vertex; //wspolrzedne wierzcholka w przestrzeni modelu
-in vec4 color; //kolor związany z wierzchołkiem
 in vec4 normal; //wektor normalny w przestrzeni modelu
 in vec2 texCoord0;
 
@@ -26,7 +25,6 @@ void main(void) {
     v = normalize(vec4(0, 0, 0, 1) - V * M * vertex); //wektor do obserwatora w przestrzeni oka
     n = normalize(V * M * normal); //wektor normalny w przestrzeni oka
     iTexCoord0 = texCoord0;
-    ic = color;
     
     gl_Position=P*V*M*vertex;
 }
