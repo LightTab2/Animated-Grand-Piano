@@ -15,9 +15,10 @@ glm::vec3 HammerPositions[8] =
 
 float HammerAngles[8] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 
-LoadedModel *ToyPianoBase,
-			*ToyPianoHammer,
-			*ToyPianoLid;
+LoadedModel* ToyPianoBase,
+			* ToyPianoHammer,
+			* ToyPianoLid,
+			* Floor;
 
 float lidAngle = static_cast<float>(PI) / 12.f;
 double lidAnimationTime = 3;

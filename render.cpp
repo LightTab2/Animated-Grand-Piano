@@ -91,6 +91,8 @@ RenderingSystem::RenderingSystem()
 	tex0 = readTexture("metal.png");
 	tex1 = readTexture("metal_spec.png");
 
+	LoadedModel::loadObj("Floor.obj", Floor);
+	Floor->loadTex("Floor.png");
 	LoadedModel::loadObj("base.obj", ToyPianoBase);
 	ToyPianoBase->loadTex("TextureBase.png");
 	LoadedModel::loadObj("hammernlid.obj", ToyPianoHammer);

@@ -23,6 +23,6 @@ private:
 	GLuint tex0, tex1;
 
 	glm::vec3 light1 = glm::vec3(0.f, 0.f, -6.f);
-	glm::vec3 pos = glm::vec3(0, 0, -5);
+	glm::vec3 pos = glm::vec3(0, 1, 2);
 };
 

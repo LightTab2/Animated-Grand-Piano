@@ -43,7 +43,14 @@ void RenderingSystem::drawScene(float angle_x, float angle_y) {
 	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
 	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mlid));
 	
-(ToyPianoLid);
+	drawModel(ToyPianoLid);
+
+	//PODLOGA
+	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(M));
+
+	drawModel(Floor);
 
 
 	glfwSwapBuffers(window); //Przerzuć tylny bufor na przedni

@@ -8,7 +8,7 @@ int main(void)
 	RenderingSystem render;
 	SoundSystem sound;
 	soundPtr = &sound;				//inputManagement musi mieć dostęp do sound, żeby można było grać na pianinie
-	double	angle_x = 0,
+	double	angle_x = -90,
 			angle_y = 0;
 
 	while (!render.shouldClose())	//Tak długo jak okno nie powinno zostać zamknięte

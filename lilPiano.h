@@ -8,7 +8,8 @@ extern float HammerAngles[8];
 
 extern LoadedModel  *ToyPianoBase,
 					*ToyPianoHammer,
-					*ToyPianoLid;
+					*ToyPianoLid,
+					*Floor;
 
 extern float lidAngle;
 extern double lidAnimationTime;
