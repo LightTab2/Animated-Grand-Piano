@@ -28,6 +28,7 @@ ipch/
 *.opensdf
 *.sdf
 *.cachefile
+*.obj
 
 # Executables
 *.out
