@@ -145,7 +145,6 @@ private:
 		}
 	};
 	static float sineTable[SINE_RESOLUTION];
-	static float sinMin;
 	PaStream* stream;
 
 	static struct SoundData

@@ -13,23 +13,24 @@ glm::vec3 HammerPositions[8] =
 	glm::vec3(0.520791f, 0.564779f, 0.566373f)
 };
 
-float HammerAngles[8] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+float			HammerAngles[8]				= { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 
-LoadedModel *ToyPianoBase,
-			*ToyPianoHammer,
-			*ToyPianoLid;
+LoadedModel		*ToyPianoBase				= nullptr,
+				*ToyPianoHammer				= nullptr,
+				*ToyPianoLid				= nullptr,
+				*Floor						= nullptr;
 
-float lidAngle = static_cast<float>(PI) / 12.f;
-double lidAnimationTime = 3;
-double lidAnimationTimeEnd = 2;
-bool lidOpen = false;
+double			lidAngle					= 0,
+				lidAnimationTime			= 3,
+				lidAnimationTimeEnd			= 2;
+bool			lidOpen						= false;
 
-LoadedModel* ToyPianoButtons[8];
-bool ToyPianoButtonsPress[8]	= { false, false, false, false, false, false, false, false, };
-double ButtonAnimationTime[8]	= { 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1 };
-double ButtonAnimationTimeEnd	= 0.1;
-float ToyPianoButtonsDepth[8]	= { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-float ToyPianoBUttonDepthEnd	= 0.066f;
+LoadedModel		*ToyPianoButtons[8]			= { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+bool			ToyPianoButtonsPress[8]		= { false, false, false, false, false, false, false, false };
+double			ButtonAnimationTime[8]		= { 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1 },
+				ButtonAnimationTimeEnd		= 0.1;
+float			ToyPianoButtonsDepth[8]		= { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+				ToyPianoBUttonDepthEnd		= 0.066f;
 
 void lilPianoPress(int i)
 {
@@ -57,16 +58,16 @@ void lilPianoAnim()
 		if (lidOpen)
 		{
 			if (lidAnimationTime >= lidAnimationTimeEnd)
-				lidAngle = 120.0 * TO_RAD;
+				lidAngle = 105.0 * TO_RAD;
 			else
-				lidAngle = (15.0 + (105.0 * (lidAnimationTime / lidAnimationTimeEnd))) * TO_RAD;
+				lidAngle = (105.0 * (lidAnimationTime / lidAnimationTimeEnd)) * TO_RAD;
 		}
 		else
 		{
 			if (lidAnimationTime >= lidAnimationTimeEnd)
-				lidAngle = 15.0 * TO_RAD;
+				lidAngle = 0.0;
 			else
-				lidAngle = (120.0 - (105.0 * (lidAnimationTime / lidAnimationTimeEnd))) * TO_RAD;
+				lidAngle = (105.0 - (105.0 * (lidAnimationTime / lidAnimationTimeEnd))) * TO_RAD;
 		}
 	}
 
@@ -84,8 +85,8 @@ void lilPianoAnim()
 				}
 				else
 				{
-					HammerAngles[i] = (13.5f * (ButtonAnimationTime[i] / ButtonAnimationTimeEnd)) * TO_RAD;
-					ToyPianoButtonsDepth[i] = ToyPianoBUttonDepthEnd * (ButtonAnimationTime[i] / ButtonAnimationTimeEnd);
+					HammerAngles[i] = (13.5f * static_cast<float>(ButtonAnimationTime[i] / ButtonAnimationTimeEnd)) * static_cast<float>(TO_RAD);
+					ToyPianoButtonsDepth[i] = ToyPianoBUttonDepthEnd * static_cast<float>(ButtonAnimationTime[i] / ButtonAnimationTimeEnd);
 				}
 			}
 			else
@@ -93,12 +94,12 @@ void lilPianoAnim()
 				if (ButtonAnimationTime[i] >= ButtonAnimationTimeEnd)
 				{
 					HammerAngles[i] = 0.0f;
-					ToyPianoButtonsDepth[i] = 0;
+					ToyPianoButtonsDepth[i] = 0.f;
 				}
 				else
 				{
-					HammerAngles[i] = (13.5f - (13.5f * (ButtonAnimationTime[i] / ButtonAnimationTimeEnd))) * TO_RAD;
-					ToyPianoButtonsDepth[i] = ToyPianoBUttonDepthEnd * (1.0 - ButtonAnimationTime[i] / ButtonAnimationTimeEnd);
+					HammerAngles[i] = (13.5f - (13.5f * static_cast<float>(ButtonAnimationTime[i] / ButtonAnimationTimeEnd))) * static_cast<float>(TO_RAD);
+					ToyPianoButtonsDepth[i] = ToyPianoBUttonDepthEnd * static_cast<float>(1.0 - ButtonAnimationTime[i] / ButtonAnimationTimeEnd);
 				}
 			}
 		}

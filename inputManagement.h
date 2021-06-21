@@ -2,6 +2,7 @@
 #include "global.h"
 #include "sound.h"
 #include "lilPiano.h"
+#include "grandPiano.h"
 
 extern float	speed_x,
 				speed_y,

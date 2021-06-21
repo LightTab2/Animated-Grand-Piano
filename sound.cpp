@@ -1,30 +1,28 @@
 ﻿#include "sound.h"
+#include "grandPiano.h"
 
-float SoundSystem::sineTable[SINE_RESOLUTION],
-SoundSystem::sinMin;
+float SoundSystem::sineTable[SINE_RESOLUTION];
 SoundSystem::SoundData SoundSystem::data;
 
 SoundSystem::SoundSystem()
 {
-	float pianAmps[] = { 1.0, 0.399064778, 0.229404484, 0.151836061,
-						0.196754229, 0.093742264, 0.060871957,
-						0.138605419, 0.010535002, 0.071021868};
-
-	sinMin = 2.75f;
-	for (unsigned i = 0; i != SINE_RESOLUTION; ++i)
+	float pianAmps[] = { 1.0f, 0.399064778f, 0.229404484f, 0.151836061f,
+						0.196754229f, 0.093742264f, 0.060871957f,
+						0.138605419f, 0.010535002f, 0.071021868f};
+	
+	sineTable[0] = 0.f;
+	for (unsigned i = 1; i != SINE_RESOLUTION; ++i)
 	{
-		sineTable[i] = 0.f;
 		for (unsigned j = 0; j != 10; ++j)
-			sineTable[i] += std::sin(((j+1) * static_cast<float>(i) / SINE_RESOLUTION) * 2 * PI) / 10 * pianAmps[j];
+			sineTable[i] += std::sin(((j+1) * static_cast<float>(i) / SINE_RESOLUTION) * 2.f * static_cast<float>(PI)) / 10.f * pianAmps[j];
 		sineTable[i] *= 2.75f; //nieco glosniej
-		if (sineTable[i] != 0.f && sineTable[i] < sinMin)
-			sinMin = sineTable[i];
 	}
-	sinMin *= 2.f;
-	sinMin = abs(sinMin);
+
 	for (int i = 0; i != SN; ++i)
-		data.index[i] = data.note[i] = data.attackTime[i] = data.releaseTime[i] = 
-		data.freq[i] = data.active[i] = data.disabled[i] = 0;
+	{
+		data.index[i] = data.note[i] = data.attackTime[i] = data.releaseTime[i] = data.disabled[i] = data.active[i] = 0;
+		data.freq[i] = 0.f;
+	}
 
 	PaError err = Pa_Initialize();
 	if (err) std::cout << Pa_GetErrorText(err) << std::endl;
@@ -45,7 +43,7 @@ SoundSystem::SoundSystem()
 	if (err) std::cout << Pa_GetErrorText(err) << std::endl;
 	err = Pa_StartStream(stream);
 	if (err) std::cout << Pa_GetErrorText(err) << std::endl;
-	//playMIDI("givingup.mid");
+	playMIDI("givingup.mid");
 }
 
 SoundSystem::~SoundSystem()
@@ -61,6 +59,7 @@ void SoundSystem::playNote(unsigned int whichOne, int volume)
 		{
 			if (data.disabled[i])
 			{
+				#pragma warning(suppress : 4244)
 				data.attackTime[i] *= 0.66f; //Dzięki temu słychac dobrze kazde nowe nacisniecie klawisza
 				data.releaseTime[i] = 0;
 				data.disabled[i] = false;
@@ -71,6 +70,7 @@ void SoundSystem::playNote(unsigned int whichOne, int volume)
 			bSilenced = data.active[i];
 			break;
 		}
+
 	if (!bSilenced)
 		for (int i = 0; i != SN; ++i)
 			if (!data.active[i])
@@ -129,7 +129,7 @@ static int patestCallback(const void* inputBuffer, void* outputBuffer,
 
 	for (unsigned int i = 0; i != framesPerBuffer; ++i)
 	{
-		if (data->notes.size())
+		if (bRunMidi && data->notes.size())
 		{
 			if (data->MIDITime == data->MIDInextDeleteCheck)
 			{
@@ -138,6 +138,7 @@ static int patestCallback(const void* inputBuffer, void* outputBuffer,
 				{
 					if (it->end == data->MIDITime)
 					{
+						grandPianoRelease(it->note);
 						SoundSystem::stopPlayingNote(it->note);
 						data->notes.erase(it++);
 						continue;
@@ -153,7 +154,10 @@ static int patestCallback(const void* inputBuffer, void* outputBuffer,
 				for (auto it = data->notes.begin(); it != data->notes.end(); ++it)
 				{
 					if (it->start == data->MIDInextCheck)
+					{
+						grandPianoPress(it->note);
 						SoundSystem::playNote(it->note, it->volume);
+					}
 					else if (it->start > data->MIDInextCheck)
 					{
 						data->MIDInextCheck = it->start;
@@ -188,7 +192,7 @@ static int patestCallback(const void* inputBuffer, void* outputBuffer,
 				}
 				if (data->releaseTime[n] < RELEASE_TIME2)
 					++data->releaseTime[n];
-				else if (abs(note) < SoundSystem::sinMin)
+				else 
 				{
 					data->releaseTime[n] = 0;
 					//data->freq[n] = 0;

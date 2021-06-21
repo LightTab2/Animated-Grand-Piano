@@ -53,6 +53,6 @@ public:
 
 	void loadTexSpec(const char* filename) { texSpec = readTexture(filename); }
 
-	static bool loadObj(const std::string &pFile, LoadedModel *&model, int id = 0, int aibit = 0);
+	static bool loadObj(const std::string &pFile, LoadedModel *&model, int id = 0);
 };
 

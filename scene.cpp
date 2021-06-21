@@ -1,10 +1,10 @@
 ﻿#include "render.h"
 
-void RenderingSystem::drawScene(float angle_x, float angle_y) {
+void RenderingSystem::drawScene(float angle_x, float angle_y) 
+{
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glm::mat4 V = glm::lookAt(pos, pos + calcDir(angle_x, angle_y), glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz widoku
-
 
 	glm::mat4 P = glm::perspective(50.0f * static_cast<float>(PI) / 180.0f, aspectRatio, 0.01f, 50.0f); //Wylicz macierz rzutowania
 
@@ -14,22 +14,31 @@ void RenderingSystem::drawScene(float angle_x, float angle_y) {
 	//Przeslij parametry programu cieniującego do karty graficznej
 	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
 	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+
+	glm::mat4 Mfloor = glm::scale(M, glm::vec3(3.f));
+	Mfloor = glm::translate(Mfloor, glm::vec3(0.f,0.f,-0.2f));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mfloor));
+
+	glUniform4f(sp->u("ls1"), light1.x, light1.y, light1.z, 1.f); //light source
+	glUniform4f(sp->u("ls2"), light2.x, light2.y, light2.z, 1.f); //light source
+
+	glUniform1i(sp->u("pink"), pink);
+	glUniform1i(sp->u("l1on"), l1);
+	glUniform1i(sp->u("l2on"), l2);
+	glUniform1i(sp->u("seed"), rand());
+
+	glUniform1f(sp->u("textureless"), 0);		//uzyj tekstur 0/1
+	drawModel(Floor);
 	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(M));
-
-	//PODSTAWA PIANINA
-	glUniform4fv(sp->u("ls"), 4, glm::value_ptr(light1)); //light source
-
-	glUniform1f(sp->u("textureless"), 0);	   //uzyj tekstur 0/1
 	drawModel(ToyPianoBase);
 
 	//PRZYCISKI oraz MLOTKI
 	for (int i = 0; i < 8; i++)
 	{
-		glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
-		glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
 		glm::mat4 Mbutton = glm::translate(M, glm::vec3(0.0f, -ToyPianoButtonsDepth[i], 0.0f));
 		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mbutton));
 		drawModel(ToyPianoButtons[i]);
+
 		glm::mat4 Mhammer = glm::translate(M, HammerPositions[i]);
 		Mhammer = glm::rotate(Mhammer, HammerAngles[i], glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
 		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mhammer));
@@ -38,55 +47,98 @@ void RenderingSystem::drawScene(float angle_x, float angle_y) {
 
 	//KLAPA
 	glm::mat4 Mlid = glm::translate(M, glm::vec3(-0.644877f, 0.740097f, 0.0f)); //Wylicz macierz modelu
-	Mlid = glm::rotate(Mlid, lidAngle, glm::vec3(0.0f, 0.0f, 1.0f)); //Wylicz macierz modelu
-	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
-	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+	Mlid = glm::rotate(Mlid, static_cast<float>(lidAngle), glm::vec3(0.0f, 0.0f, 1.0f)); //Wylicz macierz modelu
 	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mlid));
-	
-(ToyPianoLid);
+	drawModel(ToyPianoLid);
 
+	//PODSTAWA GRAND
+	M = glm::scale(M, glm::vec3(0.5f));
+	M = glm::translate(M, glm::vec3(0.f, 0.f, -10.0f));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(M));
+
+	drawModel(GrandPianoBase);
+
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(M));
+
+	drawModel(GrandPianoStrings);
+
+	//KLAPA GRAND
+
+	Mlid = glm::translate(M, glm::vec3(-2.25911f - lidAngle*2.9f, -0.91436f, 0.065f)); //Wylicz macierz modelu
+	Mlid = glm::rotate(Mlid, - 35.0f * static_cast<float>(TO_RAD), glm::vec3(0.0f, 0.0f, 1.0f)); //Wylicz macierz modelu
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mlid));
+	drawModel(GrandPianoLid);
+
+	//Klawisze grand
+
+	glm::mat4 keyM = glm::translate(M, glm::vec3(0.f, GrandButtonOffsets[0], 0.f));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+	drawModel(leftKey);
+	keyM = glm::translate(M, glm::vec3(0.f, GrandButtonOffsets[1], 0.f));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+	drawModel(blackKey);
+	keyM = glm::translate(M, glm::vec3(0.f, GrandButtonOffsets[2], 0.f));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+	drawModel(rightKey);
+	float unit = 0.094753329f;
+	float unit12 = 7.f*unit;
+	for (int i = 0; i != 7; ++i)
+	{
+		keyM = glm::translate(M, glm::vec3(unit12 * i + 2 * unit, GrandButtonOffsets[3 + i*12], 0.f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+		drawModel(leftKey);
+
+		keyM = glm::translate(M, glm::vec3(unit12 * i + 2 * unit, GrandButtonOffsets[4 + i * 12], 0.f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+		drawModel(blackKey);
+
+		keyM = glm::translate(M, glm::vec3(unit12 * i, GrandButtonOffsets[5 + i * 12], 0.f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+		drawModel(middleKey);
+
+		keyM = glm::translate(M, glm::vec3(unit12 * i + 3 * unit, GrandButtonOffsets[6 + i * 12], 0.f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+		drawModel(blackKey);
+
+		keyM = glm::translate(M, glm::vec3(unit12 * i + 3* unit, GrandButtonOffsets[7 + i * 12], 0.f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+		drawModel(rightKey);
+
+		keyM = glm::translate(M, glm::vec3(unit12 * i + 5* unit, GrandButtonOffsets[8 + i * 12], 0.f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+		drawModel(leftKey);
+
+		keyM = glm::translate(M, glm::vec3(unit12 * i + 5 * unit, GrandButtonOffsets[9 + i * 12], 0.f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+		drawModel(blackKey);
+
+		keyM = glm::translate(M, glm::vec3(unit12 * i + 3 * unit, GrandButtonOffsets[10 + i * 12], 0.f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+		drawModel(middleKey);
+
+		keyM = glm::translate(M, glm::vec3(unit12 * i + 6 * unit, GrandButtonOffsets[11 + i * 12], 0.f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+		drawModel(blackKey);
+
+		keyM = glm::translate(M, glm::vec3(unit12 * i + 4 * unit, GrandButtonOffsets[12 + i * 12], 0.f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+		drawModel(middleKey);
+
+		keyM = glm::translate(M, glm::vec3(unit12 * i + 7 * unit, GrandButtonOffsets[13 + i * 12], 0.f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+		drawModel(blackKey);
+
+		keyM = glm::translate(M, glm::vec3(unit12 * i + 7 * unit, GrandButtonOffsets[14 + i * 12], 0.f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+		drawModel(rightKey);
+	}
+
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
+	for (int i = 0; i != 87; ++i)
+	{
+		if (GrandPianoHammer)
+		drawModel(GrandPianoHammer[0]);
+	}
 
 	glfwSwapBuffers(window); //Przerzuć tylny bufor na przedni
 }
-
-/*void RenderingSystem::drawScene(float angle_x, float angle_y)
-{
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glm::mat4 V = glm::lookAt(pos, pos + calcDir(angle_x, angle_y), glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz widoku
-
-
-	glm::mat4 P = glm::perspective(50.0f * PI / 180.0f, aspectRatio, 0.01f, 50.0f); //Wylicz macierz rzutowania
-
-	glm::mat4 M = glm::mat4(1.0f);
-
-	sp->use();//Aktywacja programu cieniującego
-	//Przeslij parametry programu cieniującego do karty graficznej
-	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
-	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
-	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(M));
-	glUniform1i(sp->u("seed"), rand());
-	glUniform4f(sp->u("swiatlo"), swiatlo.x, swiatlo.y, swiatlo.z, 1.f);
-
-	glEnableVertexAttribArray(sp->a("vertex"));		//Włącz przesyłanie danych do atrybutu vertex
-	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, vertices); //Wskaż tablicę z danymi dla atrybutu vertex
-	glEnableVertexAttribArray(sp->a("normal"));		//Włącz przesyłanie danych do atrybutu vertex
-	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT, false, 0, normals); //Wskaż tablicę z danymi dla atrybutu vertex
-	glEnableVertexAttribArray(sp->a("texCoord0"));  //Włącz przesyłanie danych do atrybutu vertex
-	glVertexAttribPointer(sp->a("texCoord0"), 2, GL_FLOAT, false, 0, texCoords); //Wskaż tablicę z danymi dla atrybutu vertex
-	glUniform1i(sp->u("textureMap0"), 0);
-	glUniform1i(sp->u("textureMap1"), 1);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tex0);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, tex1);
-
-	glDrawArrays(GL_TRIANGLES, 0, vertexCount);			//Narysuj obiekt
-
-	glDisableVertexAttribArray(sp->a("vertex"));		//Wyłącz przesyłanie danych do atrybutu vertex
-	glDisableVertexAttribArray(sp->a("normal"));		//Wyłącz przesyłanie danych do atrybutu vertex
-	glDisableVertexAttribArray(sp->a("texCoord0"));		//Wyłącz przesyłanie danych do atrybutu vertex
-
-	glfwSwapBuffers(window); //Przerzuć tylny bufor na przedni
-}*/

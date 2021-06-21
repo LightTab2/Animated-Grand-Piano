@@ -17,16 +17,16 @@
 Projekt zaliczeniowy na laboratorium **Grafiki Komputerowej i Wizualizacji**. 
 
 ## Funckjonalność
-- [ ] Wyświetlanie oteksturowanego modelu pianina
-- [ ] Kamera FPS (hotkey: x)
-- [ ] Granie na pianinie za pomocą klawiatury (hotkey: x, klawisze q-] i a-\\)
-- [ ] Możliwość otwarcia pianina (hotkey: z)
-- [ ] Uderzenia młoteczków w struny
-- [ ] Wibracje strun
+- [X] Wyświetlanie oteksturowanego modelu pianina
+- [X] Kamera FPS
+- [X] Granie na pianinie za pomocą klawiatury
+- [X] Możliwość otwarcia pianina (hotkey: O)
+- [X] Uderzenia młoteczków w struny
 
 ## Dodatkowa funckjonalność
 - [ ] Otoczenie
-- [ ] Wczytywanie MIDI
-- [ ] Obrót kamery za pomocą myszki (i ograniczenie myszki za pomocą WINAPI)
-- [ ] Wytłumianie wibracji strun
+- [X] Wczytywanie MIDI
+- [X] Obrót kamery za pomocą myszki (i ograniczenie myszki za pomocą WINAPI)
 - [ ] Możliwość gry na pianinie za pomocą LPM (klawisze to płaszczyzny, których przecięcie z wektorem perspektywy jest sprawdzane; jeżeli jest kilka kandydatów to gramy klawisz najbliżej)
+- [ ] Wibracje strun
+- [ ] Wytłumianie wibracji strun

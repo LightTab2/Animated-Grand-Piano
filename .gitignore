@@ -28,7 +28,6 @@ ipch/
 *.opensdf
 *.sdf
 *.cachefile
-*.obj
 
 # Executables
 *.out
@@ -63,3 +62,6 @@ ipch/
 *.swp
 TemporaryGeneratedFile*
 *.cache
+Release
+Debug
+packages

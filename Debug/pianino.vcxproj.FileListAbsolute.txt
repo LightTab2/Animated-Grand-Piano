@@ -1,9 +1,0 @@
-F:\Programowanie\Pianino\Debug\pianino.exe
-F:\Programowanie\Pianino\Debug\pianino.pdb
-F:\Programowanie\Pianino\Debug\pianino.vcxproj.CopyComplete
-F:\Programowanie\Pianino\Debug\assimp-vc142-mtd.dll
-F:\Programowanie\Pianino\Debug\Irrlicht.dll
-F:\Programowanie\Pianino\Debug\libpng16d.dll
-F:\Programowanie\Pianino\Debug\zlibd1.dll
-F:\Programowanie\Pianino\Debug\jpeg62.dll
-F:\Programowanie\Pianino\Debug\bz2d.dll

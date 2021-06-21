@@ -1,5 +1,10 @@
 ﻿#include "global.h"
 
+bool	pink	= true,
+		l1		= true,
+		l2		= true,
+		bRunMidi = false;
+
 glm::vec3 calcDir(float kat_x, float kat_y, glm::vec4 dir)
 {
 	glm::mat4 M = glm::rotate(glm::mat4(1), kat_y, glm::vec3(0, 1, 0));

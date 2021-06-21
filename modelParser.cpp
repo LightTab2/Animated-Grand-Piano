@@ -113,14 +113,14 @@ LoadedModel::LoadedModel(const aiScene* sc, int id)
 	std::cout << "Loaded\n";
 }
 
-bool LoadedModel::loadObj(const std::string& pFile, LoadedModel* &model, int id, int aibit)
+bool LoadedModel::loadObj(const std::string& pFile, LoadedModel* &model, int id)
 {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(pFile, aiProcess_Triangulate | aiProcess_FlipUVs);
 
-	if (!scene) {
+	if (!scene) 
 		return false;
-	}
+
 	model = new LoadedModel(scene, id);
 	std::cout << "Loaded model:" << pFile << "\n\n";
 	return true;
