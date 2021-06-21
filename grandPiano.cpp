@@ -14,7 +14,7 @@ LoadedModel		*GrandPianoButtons[87];
 bool			GrandPianoButtonsPress[87],
 				GrandPianoMalletReleased[87];
 double			GrandButtonAnimationTime[87],
-				GrandButtonAnimationTimeEnd = 0.015f;
+				GrandButtonAnimationTimeEnd = 0.05f;
 float			GrandPianoButtonDepthEnd = -0.025f,
 				GrandButtonOffsets[87];
 
@@ -43,6 +43,7 @@ void grandPianoRelease(int i)
 	if (i > 86)
 		return;
 	GrandPianoButtonsPress[i] = false;
+	GrandPianoMalletReleased[i] = true;
 }
 
 void grandAnimation()
@@ -53,15 +54,16 @@ void grandAnimation()
 		{
 			if (GrandButtonAnimationTime[i] < GrandButtonAnimationTimeEnd)
 				GrandButtonAnimationTime[i] += glfwGetTime();
-			else 
+
+			if (GrandButtonAnimationTime[i] > GrandButtonAnimationTimeEnd)
 				GrandButtonAnimationTime[i] = GrandButtonAnimationTimeEnd;
 		}
 		else
 		{
 			if (GrandButtonAnimationTime[i] > 0)
 				GrandButtonAnimationTime[i] -= glfwGetTime();
-			else
-				GrandButtonAnimationTime[i] = 0;
+			
+			if (GrandButtonAnimationTime[i] < 0) GrandButtonAnimationTime[i] = 0;
 		}
 		GrandButtonOffsets[i] = static_cast<float>(GrandButtonAnimationTime[i] / GrandButtonAnimationTimeEnd) * GrandPianoButtonDepthEnd;
 	}

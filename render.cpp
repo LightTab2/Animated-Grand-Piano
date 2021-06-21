@@ -30,6 +30,12 @@ void RenderingSystem::LoadModels()
 	LoadedModel::loadObj("hammernlid.obj", ToyPianoLid, 1);
 	ToyPianoLid->loadTex("TextureBase.png"); 
 
+	for (int i = 0; i != 8; ++i)
+	{
+		LoadedModel::loadObj("buttons.obj", ToyPianoButtons[i], i);
+		ToyPianoButtons[i]->loadTex("TextureBase.png");
+	}
+
 	LoadedModel::loadObj("grandPiano.obj", GrandPianoBase);
 	LoadedModel::loadObj("grandPianoLid.obj", GrandPianoLid);
 	LoadedModel::loadObj("grandPianoStrings.obj", GrandPianoStrings);
@@ -47,20 +53,18 @@ void RenderingSystem::LoadModels()
 	LoadedModel::loadObj("blackKey.obj", blackKey);
 	blackKey->loadTex("blackKey.png");
 
-	for (unsigned i = 0; i != 22; ++i)
+	for (unsigned i = 0; i != 12; ++i)
 	{
 		std::string file = "GrandPianoHammer/Hammer_BlendSwap_0000";
 		LoadedModel::loadObj(file + std::to_string(i + 16) + ".obj", GrandPianoHammer[i]);
-		if (i == 0)
-			GrandPianoHammer[0]->loadTex("grandHammer.png");
-		else
-			GrandPianoHammer[i]->setTexture(GrandPianoHammer[0]->getTexture());
+		GrandPianoHammer[i]->loadTex("grandHammer.png");
 	}
 
-	for (int i = 0; i != 8; ++i)
+	for (unsigned i = 0; i != 10; ++i)
 	{
-		LoadedModel::loadObj("buttons.obj", ToyPianoButtons[i], i);
-		ToyPianoButtons[i]->loadTex("TextureBase.png");
+		std::string file = "GrandPianoHammer/Hammer_BlendSwap_0000";
+		LoadedModel::loadObj(file + std::to_string(i + 41) + ".obj", GrandPianoHammer[i+12]);
+		GrandPianoHammer[i+12]->loadTex("grandHammer.png");
 	}
 }
 

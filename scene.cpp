@@ -133,12 +133,20 @@ void RenderingSystem::drawScene(float angle_x, float angle_y)
 		drawModel(rightKey);
 	}
 
-	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(keyM));
-	for (int i = 0; i != 87; ++i)
+	/*for (int i = 0; i != 87; ++i)
 	{
-		if (GrandPianoHammer)
-		drawModel(GrandPianoHammer[0]);
-	}
+		glm::mat4 hammerM = glm::scale(M, glm::vec3(0.054768f, 0.024811f, 0.024811f));
+		hammerM = glm::translate(hammerM, glm::vec3(unit * i * 4, 0.0f, 0.0f));
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(hammerM));
+		if (GrandPianoButtonsPress[i])
+		{
+			unsigned index = static_cast<unsigned>(floor(11 * std::min(GrandButtonAnimationTimeEnd,GrandButtonAnimationTime[i]) / GrandButtonAnimationTimeEnd));
+			drawModel(GrandPianoHammer[index]);
+		}
+		else if (GrandButtonAnimationTime[i] != 0.0)
+			drawModel(GrandPianoHammer[11 + static_cast<unsigned>(floor(9 * (1.0 - std::min(GrandButtonAnimationTimeEnd, GrandButtonAnimationTime[i]) / GrandButtonAnimationTimeEnd)))]);
+		else drawModel(GrandPianoHammer[0]);
+	}*/
 
 	glfwSwapBuffers(window); //Przerzuć tylny bufor na przedni
 }
