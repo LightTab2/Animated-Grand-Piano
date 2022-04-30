@@ -1,19 +1,10 @@
 <p align="center">
     <img src="images/logo.png"
-         height="150" width="300">
+         height="150" width="300"/><br>
+    <img src="https://img.shields.io/github/downloads/LightTab2/Animated-Piano/total.svg?style=flat"/> <img src="https://img.shields.io/github/issues-raw/LightTab2/Animated-Piano.svg?style=flat"/> <img src="https://img.shields.io/github/stars/LightTab2/Animated-Piano.svg?style=flat"/>
 </p>
 
-# Pianino 
-
-<!-- <p align="center">
-        <img src="https://img.shields.io/github/downloads/LightTab2/Pianino/total.svg?style=flat"
-              >
-        <img src="https://img.shields.io/github/issues-raw/LightTab2/Pianino.svg?style=flat"
-              >
-        <img src="https://img.shields.io/github/stars/LightTab2/Pianino.svg?style=flat"
-              >
-</p> -->
-
+# Fortepian 
 Projekt zaliczeniowy na laboratorium **Grafiki Komputerowej i Wizualizacji**. 
 
 ## Funckjonalność
